@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { logout, getCurrentUserEmail, getUserByEmail } from "../services/tokenService";
 import { getUserInfo } from "../services/userService";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import viteLogo from "/vite.svg";
 
 function Header() {
   const [user, setUser] = useState(null);
@@ -9,6 +10,23 @@ function Header() {
   const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Function để lấy title theo pathname
+  const getPageTitle = (pathname) => {
+    switch (pathname) {
+      case '/dashboard':
+        return 'Dashboard';
+      case '/role-management':
+        return 'Quản lý Vai trò';
+      case '/login':
+        return 'Đăng nhập';
+      case '/register':
+        return 'Đăng ký';
+      default:
+        return 'PlanTraining';
+    }
+  };
 
   useEffect(() => {
     const loadUserInfo = async () => {
@@ -77,11 +95,35 @@ function Header() {
     }}>
       {/* Logo/Brand */}
       <div style={{
-        fontSize: "20px",
-        fontWeight: "bold",
-        color: "#2d3748"
+        display: "flex",
+        alignItems: "center",
+        gap: "12px"
       }}>
-        MyApp
+        <img 
+          src={viteLogo} 
+          alt="Logo" 
+          style={{
+            height: "32px",
+            width: "auto"
+          }}
+        />
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <span style={{
+            fontSize: "18px",
+            fontWeight: "bold",
+            color: "#2d3748",
+            lineHeight: "1.2"
+          }}>
+            PlanTraining
+          </span>
+          <span style={{
+            fontSize: "14px",
+            color: "#718096",
+            fontWeight: "500"
+          }}>
+            {getPageTitle(location.pathname)}
+          </span>
+        </div>
       </div>
 
       {/* User Info */}
