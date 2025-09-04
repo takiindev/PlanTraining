@@ -1,0 +1,25 @@
+.layout {
+  min-height: 100vh;
+  background: #f7fafc;
+}
+
+.layout-main {
+  padding-top: 0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .layout {
+    background: #f7fafc;
+  }
+  
+  .layout-main {
+    padding: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .layout {
+    background: #f7fafc;
+  }
+}

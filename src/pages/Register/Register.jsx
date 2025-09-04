@@ -10,6 +10,7 @@ function Register() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState("");
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -17,19 +18,20 @@ function Register() {
 
         // Kiểm tra các trường bắt buộc
         if (!firstName.trim() || !lastName.trim()) {
-            alert("Vui lòng nhập đầy đủ họ tên!");
+            setMessage("Vui lòng nhập đầy đủ họ tên!");
             return;
         }
 
         if (password !== confirmPassword) {
-            alert("Mật khẩu nhập lại không khớp!");
+            setMessage("Mật khẩu nhập lại không khớp!");
             return;
         }
 
         setLoading(true);
+        setMessage("");
         try {
             const id = await saveAccount(email, password, firstName.trim(), lastName.trim());
-            alert(`Đăng ký thành công! Tài khoản đã được tạo với ID: ${id}. Bạn có thể đăng nhập ngay bây giờ.`);
+            setMessage(`Đăng ký thành công! Tài khoản đã được tạo với ID: ${id}. Bạn có thể đăng nhập ngay bây giờ.`);
             // Reset form
             setFirstName("");
             setLastName("");
@@ -40,7 +42,7 @@ function Register() {
             console.error(err);
             // Show more specific error message
             const errorMessage = err.message || "Có lỗi xảy ra khi đăng ký!";
-            alert(`Lỗi đăng ký: ${errorMessage}`);
+            setMessage(`Lỗi đăng ký: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
@@ -111,6 +113,16 @@ function Register() {
                     <button className="register-button" type="submit" disabled={loading}>
                         {loading ? "Registering..." : "Register"}
                     </button>
+                    
+                    {message && (
+                        <div className="message" style={{ 
+                            color: message.includes('thành công') ? 'green' : 'red', 
+                            textAlign: 'center', 
+                            marginTop: '10px' 
+                        }}>
+                            {message}
+                        </div>
+                    )}
                 </form>
 
                 <p style={{ textAlign: "center", marginTop: "16px" }}>

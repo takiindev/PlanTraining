@@ -15,36 +15,25 @@ function RoleManagement() {
   // Load current user info
   const loadCurrentUser = async () => {
     try {
-      console.log("Loading current user...");
       const isValid = await checkSession();
       if (!isValid) {
-        console.log("Session invalid, redirecting to login");
         navigate("/login");
         return;
       }
 
       const email = getCurrentUserEmail();
-      console.log("Current user email:", email);
       const user = await getUserByEmail(email);
-      console.log("User from token service:", user);
       
       if (user && user.id) {
         // Sử dụng user.id thay vì user.uid vì accounts collection dùng id
         const userInfo = await getUserInfo(user.id);
-        console.log("User info from userService:", userInfo);
         setCurrentUser(userInfo);
         
         // Kiểm tra quyền owner
         if (userInfo?.role !== "owner") {
-          console.log("User role:", userInfo?.role, "- Not owner, redirecting");
-          alert("Chỉ owner mới có quyền truy cập trang này!");
           navigate("/dashboard");
           return;
         }
-        
-        console.log("User is owner, proceeding...");
-      } else {
-        console.log("No user found or no ID");
       }
     } catch (error) {
       console.error("Lỗi load user info:", error);
@@ -56,13 +45,10 @@ function RoleManagement() {
   const loadAllUsers = async () => {
     try {
       setLoading(true);
-      console.log("Loading all users...");
       const users = await getAllUsers();
-      console.log("Loaded users:", users);
       setAllUsers(users);
     } catch (error) {
       console.error("Lỗi load users:", error);
-      alert("Lỗi load danh sách users: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -73,20 +59,17 @@ function RoleManagement() {
     try {
       // Kiểm tra quyền: chỉ owner mới có thể thay đổi role
       if (currentUser?.role !== "owner") {
-        alert("Chỉ owner mới có quyền quản lý vai trò!");
         return;
       }
 
       // Không cho phép thay đổi role của chính mình
       if (userId === currentUser.uid) {
-        alert("Không thể thay đổi role của chính mình!");
         return;
       }
 
       // Không cho phép thay đổi role của owner khác
       const targetUser = allUsers.find(user => user.uid === userId);
       if (targetUser?.role === "owner") {
-        alert("Không thể thay đổi role của Owner!");
         return;
       }
 
@@ -96,7 +79,6 @@ function RoleManagement() {
       loadAllUsers();
     } catch (error) {
       console.error("Lỗi cập nhật role:", error);
-      alert("Lỗi cập nhật role: " + error.message);
     }
   };
 
@@ -214,7 +196,6 @@ function RoleManagement() {
           <div className="user-list">
             {(() => {
               const filteredUsers = getFilteredUsers();
-              console.log("All users:", allUsers.length, "Filtered users:", filteredUsers.length, "Current user UID:", currentUser?.uid);
               
               if (allUsers.length === 0) {
                 return (

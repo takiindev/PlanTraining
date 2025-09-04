@@ -48,7 +48,6 @@ export async function saveAccount(email, password, firstName, lastName) {
       role: "user" // Thiết lập role mặc định là "user" cho tài khoản mới
     });
     
-    console.log("Tài khoản và thông tin người dùng được tạo với ID:", docRef.id);
     return docRef.id;
   } catch (error) {
     console.error("Lỗi khi tạo tài khoản:", error);
@@ -89,8 +88,6 @@ export async function loginAccount(email, password) {
     // Lưu token và email vào localStorage
     saveTokenToStorage(newToken);
     saveUserEmailToStorage(email);
-    
-    console.log("Người dùng đăng nhập thành công:", email);
     
     return {
       success: true,

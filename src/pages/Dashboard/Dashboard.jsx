@@ -145,9 +145,7 @@ function Dashboard() {
 
   const loadMentors = async () => {
     try {
-      console.log("Đang tải danh sách mentor...");
       const mentorData = await getMentors();
-      console.log("Mentor data loaded:", mentorData);
       setMentors(mentorData);
     } catch (error) {
       console.error("Lỗi khi tải danh sách mentor:", error);
@@ -157,24 +155,14 @@ function Dashboard() {
   // Debug function để setup admin và member
   const handleSetupRoles = async () => {
     try {
-      console.log("Đang setup roles...");
-      
-      // Tạo admin đầu tiên nếu chưa có
       const adminResult = await ensureAdminExists();
-      console.log("Admin setup:", adminResult);
-      
-      // Tạo một số member mẫu
       const memberResult = await createSampleMembers();
-      console.log("Member setup:", memberResult);
-      
-      alert(`Setup hoàn thành!\n${adminResult.message}\n${memberResult.message}`);
       
       // Reload mentor list
       await loadMentors();
       
     } catch (error) {
       console.error("Lỗi setup roles:", error);
-      alert("Lỗi setup: " + error.message);
     }
   };
 
@@ -187,20 +175,17 @@ function Dashboard() {
   const addSupportMentor = () => {
     // Kiểm tra xem đã chọn mentor chính chưa
     if (!formData.mentor) {
-      alert("Vui lòng chọn mentor chính trước khi thêm mentor hỗ trợ!");
       return;
     }
 
     // Kiểm tra xem tất cả mentor hỗ trợ hiện tại đã được chọn chưa
     const hasEmptySupportMentor = formData.supportMentors.some(mentor => mentor === "");
     if (hasEmptySupportMentor) {
-      alert("Vui lòng chọn đầy đủ mentor hỗ trợ hiện tại trước khi thêm mentor mới!");
       return;
     }
 
     // Kiểm tra còn mentor khả dụng không
     if (getAvailableMentors().length === 0) {
-      alert("Không còn mentor khả dụng để thêm!");
       return;
     }
 
@@ -289,11 +274,12 @@ function Dashboard() {
     }
   };
 
-  const handleClassClick = (classItem) => {
-    if (userInfo?.role !== "admin") {
-      return; // Chỉ admin mới có thể sửa lớp học
+  const handleClassClick = (classItem, event) => {
+    if (userInfo?.role !== "admin" && userInfo?.role !== "owner") {
+      return;
     }
     
+    // Mở modal edit với thông tin class đã điền sẵn
     setEditingClass(classItem);
     setFormData({
       topic: classItem.topic,
@@ -311,13 +297,14 @@ function Dashboard() {
     setShowModal(true);
   };
 
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validation: Không cho phép submit nếu có mentor hỗ trợ trống
     const hasEmptySupportMentor = formData.supportMentors.some(mentor => mentor === "");
     if (hasEmptySupportMentor) {
-      alert("Vui lòng chọn đầy đủ tất cả mentor hỗ trợ hoặc xóa các ô trống!");
       return;
     }
     
@@ -331,17 +318,14 @@ function Dashboard() {
 
       if (editingClass) {
         await updateClass(editingClass.id, classData);
-        alert("Cập nhật lớp học thành công!");
       } else {
         await createClass(classData);
-        alert("Tạo lớp học thành công!");
       }
       
       handleCloseModal(); // Sử dụng function mới để close và reset
       loadClasses();
     } catch (error) {
       console.error("Lỗi khi lưu lớp học:", error);
-      alert("Có lỗi xảy ra: " + error.message);
     }
   };
 
@@ -351,13 +335,20 @@ function Dashboard() {
     if (window.confirm("Bạn có chắc muốn xóa lớp học này?")) {
       try {
         await deleteClass(editingClass.id);
-        alert("Xóa lớp học thành công!");
         handleCloseModal(); // Sử dụng function mới để close và reset
         loadClasses();
       } catch (error) {
         console.error("Lỗi khi xóa lớp học:", error);
-        alert("Có lỗi xảy ra: " + error.message);
       }
+    }
+  };
+
+  const handleDeleteClass = async (classId) => {
+    try {
+      await deleteClass(classId);
+      loadClasses();
+    } catch (error) {
+      console.error("Lỗi khi xóa lớp học:", error);
     }
   };
 
@@ -518,16 +509,7 @@ function Dashboard() {
           {userInfo?.role === "owner" && (
             <button 
               onClick={() => navigate('/role-management')}
-              style={{
-                padding: "8px 16px",
-                background: "#4299e1",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                fontSize: "12px",
-                cursor: "pointer",
-                whiteSpace: "nowrap"
-              }}
+              className="role-management-btn"
             >
               Quản lý vai trò
             </button>
@@ -544,21 +526,40 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Main Content - Flex Layout */}
-      <div style={{ display: "flex", gap: "20px", height: "calc(100vh - 200px)" }}>
-        {/* Left Panel - Compact Calendar */}
-        <div style={{ width: "350px", background: "#fff", borderRadius: "8px", padding: "20px", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)" }}>
+      {/* Main Content - Responsive Layout */}
+      <div className="main-layout">
+        {/* Right Panel - Compact Calendar (shows first on mobile) */}
+        <div className="right-panel">
           <div className="calendar-header" style={{ marginBottom: "16px" }}>
-            <div className="calendar-nav">
+            <div className="current-period" style={{ fontSize: "16px", fontWeight: "600", textAlign: "center", marginBottom: "12px" }}>
+              {view === "month" ? formatDate(currentDate) : formatWeek(currentDate)}
+            </div>
+            
+            <div className="calendar-controls">
               <button 
                 className="nav-button"
                 onClick={() => view === "month" ? navigateMonth(-1) : navigateWeek(-1)}
               >
                 ←
               </button>
-              <div className="current-period" style={{ fontSize: "16px", fontWeight: "600" }}>
-                {view === "month" ? formatDate(currentDate) : formatWeek(currentDate)}
+              
+              <div className="view-toggle">
+                <button 
+                  className={`view-button ${view === "month" ? "active" : ""}`}
+                  onClick={() => setView("month")}
+                  style={{ fontSize: "12px", padding: "4px 8px" }}
+                >
+                  Tháng
+                </button>
+                <button 
+                  className={`view-button ${view === "week" ? "active" : ""}`}
+                  onClick={() => setView("week")}
+                  style={{ fontSize: "12px", padding: "4px 8px" }}
+                >
+                  Tuần
+                </button>
               </div>
+              
               <button 
                 className="nav-button"
                 onClick={() => view === "month" ? navigateMonth(1) : navigateWeek(1)}
@@ -566,27 +567,10 @@ function Dashboard() {
                 →
               </button>
             </div>
-            
-            <div className="view-toggle" style={{ marginTop: "12px" }}>
-              <button 
-                className={`view-button ${view === "month" ? "active" : ""}`}
-                onClick={() => setView("month")}
-                style={{ fontSize: "12px", padding: "4px 8px" }}
-              >
-                Tháng
-              </button>
-              <button 
-                className={`view-button ${view === "week" ? "active" : ""}`}
-                onClick={() => setView("week")}
-                style={{ fontSize: "12px", padding: "4px 8px" }}
-              >
-                Tuần
-              </button>
-            </div>
           </div>
 
           {/* Compact Calendar Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px" }}>
+          <div className="compact-calendar-grid">
             {/* Day Headers */}
             {["CN", "T2", "T3", "T4", "T5", "T6", "T7"].map((day) => (
               <div key={day} style={{ 
@@ -605,47 +589,19 @@ function Dashboard() {
             {displayDays.map((date, index) => (
               <div
                 key={index}
-                style={{
-                  padding: "8px 4px",
-                  textAlign: "center",
-                  fontSize: "13px",
-                  cursor: "pointer",
-                  position: "relative",
-                  background: selectedDateForDetail.toDateString() === date.toDateString() ? "#4299e1" : "transparent",
-                  color: selectedDateForDetail.toDateString() === date.toDateString() ? "white" :
-                         !isCurrentMonth(date) && view === "month" ? "#a0aec0" :
-                         isToday(date) ? "#4299e1" : "#2d3748",
-                  borderRadius: "4px",
-                  transition: "all 0.2s",
-                  minHeight: "32px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
+                className={`compact-day ${
+                  selectedDateForDetail.toDateString() === date.toDateString() ? 'selected' : ''
+                } ${
+                  !isCurrentMonth(date) && view === "month" ? 'other-month' : ''
+                } ${
+                  isToday(date) ? 'today' : ''
+                }`}
                 onClick={() => handleDaySelect(date)}
-                onMouseEnter={(e) => {
-                  if (selectedDateForDetail.toDateString() !== date.toDateString()) {
-                    e.target.style.background = "#f7fafc";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedDateForDetail.toDateString() !== date.toDateString()) {
-                    e.target.style.background = "transparent";
-                  }
-                }}
                 onDoubleClick={() => canManageClasses() && handleDayClick(date)}
               >
                 {date.getDate()}
                 {hasClassesOnDate(date) && (
-                  <div style={{
-                    position: "absolute",
-                    top: "2px",
-                    right: "2px",
-                    width: "6px",
-                    height: "6px",
-                    borderRadius: "50%",
-                    background: "#f56500"
-                  }}></div>
+                  <div className="day-indicator"></div>
                 )}
               </div>
             ))}
@@ -665,13 +621,13 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Right Panel - Class Details */}
-        <div style={{ flex: "1", background: "#fff", borderRadius: "8px", padding: "20px", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)" }}>
+        {/* Left Panel - Class Details (shows second on mobile) */}
+        <div className="left-panel">
           <div style={{ marginBottom: "16px", borderBottom: "2px solid #e2e8f0", paddingBottom: "12px" }}>
-            <h3 style={{ margin: "0", color: "#2d3748", fontSize: "18px" }}>
+            <h3 className="detail-title" style={{ margin: "0", color: "#2d3748", fontSize: "18px" }}>
               Chi tiết ngày {selectedDateForDetail.toLocaleDateString('vi-VN')}
             </h3>
-            <p style={{ margin: "4px 0 0 0", color: "#718096", fontSize: "14px" }}>
+            <p className="class-count" style={{ margin: "4px 0 0 0", color: "#718096", fontSize: "14px" }}>
               {getClassesForSelectedDate().length} buổi dạy
             </p>
           </div>
@@ -717,14 +673,22 @@ function Dashboard() {
                     cursor: canManageClasses() ? "pointer" : "default",
                     transition: "all 0.2s"
                   }}
-                  onClick={() => canManageClasses() && handleClassClick(cls)}
-                  onMouseEnter={(e) => canManageClasses() && (e.target.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.1)")}
-                  onMouseLeave={(e) => canManageClasses() && (e.target.style.boxShadow = "none")}
+                  onClick={(e) => canManageClasses() && handleClassClick(cls, e)}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "8px" }}>
                     <div style={{ flex: 1 }}>
                       <h4 style={{ margin: "0 0 4px 0", color: "#2d3748", fontSize: "16px", fontWeight: "600" }}>
                         {cls.topic}
+                        {canManageClasses() && (
+                          <span style={{ 
+                            marginLeft: "8px", 
+                            fontSize: "12px", 
+                            color: "#718096",
+                            fontWeight: "400"
+                          }}>
+                            ✏️ Click để chỉnh sửa
+                          </span>
+                        )}
                       </h4>
                       <div style={{ fontSize: "14px", color: "#4a5568", marginBottom: "8px" }}>
                         <span style={{ fontWeight: "600" }}>⏰ {cls.startTime} - {cls.endTime}</span>

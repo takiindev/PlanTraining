@@ -26,7 +26,6 @@ export async function createClass(classData) {
       status: "scheduled" // scheduled, completed, cancelled
     });
     
-    console.log("Lớp học được tạo với ID:", docRef.id);
     return docRef.id;
   } catch (error) {
     console.error("Lỗi khi tạo lớp học:", error);
@@ -114,8 +113,6 @@ export async function updateClass(classId, updateData) {
       ...updateData,
       updatedAt: new Date()
     });
-    
-    console.log("Lớp học đã được cập nhật:", classId);
   } catch (error) {
     console.error("Lỗi khi cập nhật lớp học:", error);
     throw error;
@@ -130,7 +127,6 @@ export async function updateClass(classId, updateData) {
 export async function deleteClass(classId) {
   try {
     await deleteDoc(doc(db, "classes", classId));
-    console.log("Lớp học đã được xóa:", classId);
   } catch (error) {
     console.error("Lỗi khi xóa lớp học:", error);
     throw error;
@@ -163,7 +159,6 @@ export async function getMentors() {
       }
     });
     
-    console.log("Danh sách mentors:", mentors); // Debug log
     return mentors;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách mentor:", error);

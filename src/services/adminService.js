@@ -68,9 +68,8 @@ export async function getUsersByRole(role) {
 export async function promoteToMember(userId) {
   try {
     await updateUserRole(userId, "member");
-    console.log(`User ${userId} đã được thăng cấp thành member`);
-  } catch (error) {
-    console.error("Lỗi khi thăng cấp user:", error);
+    } catch (error) {
+    console.error("Lỗi thăng cấp user thành member:", error);
     throw error;
   }
 }
@@ -83,9 +82,8 @@ export async function promoteToMember(userId) {
 export async function promoteToAdmin(userId) {
   try {
     await updateUserRole(userId, "admin");
-    console.log(`User ${userId} đã được thăng cấp thành admin`);
-  } catch (error) {
-    console.error("Lỗi khi thăng cấp admin:", error);
+    } catch (error) {
+    console.error("Lỗi thăng cấp user thành admin:", error);
     throw error;
   }
 }
@@ -99,7 +97,6 @@ export async function promoteToAdmin(userId) {
 export async function demoteUser(userId, newRole) {
   try {
     await updateUserRole(userId, newRole);
-    console.log(`User ${userId} đã được hạ cấp xuống ${newRole}`);
   } catch (error) {
     console.error("Lỗi khi hạ cấp user:", error);
     throw error;

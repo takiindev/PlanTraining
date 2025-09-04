@@ -23,7 +23,7 @@ export async function saveUserInfo(userId, userInfo) {
       updatedAt: new Date()
     });
     
-    console.log("Thông tin người dùng đã được lưu với ID:", userId);
+    return userId;
   } catch (error) {
     console.error("Lỗi khi lưu thông tin người dùng:", error);
     throw error;
@@ -67,9 +67,8 @@ export async function updateUserInfo(userId, updateData) {
       updatedAt: new Date()
     }, { merge: true });
     
-    console.log("Thông tin người dùng đã được cập nhật:", userId);
-  } catch (error) {
-    console.error("Lỗi khi cập nhật thông tin người dùng:", error);
+    } catch (error) {
+    console.error("Lỗi cập nhật user info:", error);
     throw error;
   }
 }
@@ -92,8 +91,6 @@ export async function updateUserRole(userId, newRole) {
       role: newRole,
       updatedAt: new Date()
     }, { merge: true });
-    
-    console.log(`Role của user ${userId} đã được cập nhật thành: ${newRole}`);
   } catch (error) {
     console.error("Lỗi khi cập nhật role:", error);
     throw error;
@@ -106,13 +103,9 @@ export async function updateUserRole(userId, newRole) {
  */
 export async function getAllUsers() {
   try {
-    console.log("🔍 Bắt đầu getAllUsers...");
     const usersCollection = collection(db, "users");
-    console.log("📁 Users collection reference:", usersCollection);
     
     const snapshot = await getDocs(usersCollection);
-    console.log("📊 Snapshot received, size:", snapshot.size);
-    console.log("📊 Snapshot empty:", snapshot.empty);
     
     const users = [];
     snapshot.forEach((doc) => {
@@ -121,11 +114,8 @@ export async function getAllUsers() {
         id: doc.id,  // Giữ lại cho tương thích
         ...doc.data()
       };
-      console.log("👤 User found:", doc.id, userData);
       users.push(userData);
     });
-    
-    console.log("📋 Total users before sorting:", users.length);
     
     // Sắp xếp theo role (owner > admin > member > user) rồi theo tên
     users.sort((a, b) => {
@@ -138,7 +128,6 @@ export async function getAllUsers() {
       return nameA.localeCompare(nameB);
     });
     
-    console.log("✅ Final users array:", users);
     return users;
   } catch (error) {
     console.error("❌ Lỗi khi lấy danh sách users:", error);

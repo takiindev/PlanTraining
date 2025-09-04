@@ -7,6 +7,7 @@ function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState("");
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -14,18 +15,18 @@ function Login() {
         if (loading) return;
 
         setLoading(true);
+        setMessage("");
         try {
             const result = await loginAccount(email, password);
             
             if (result.success) {
-                alert(`Đăng nhập thành công! Chào mừng ${result.user.email}`);
                 // Redirect to dashboard or home page
                 navigate("/dashboard");
             }
         } catch (err) {
             console.error(err);
             const errorMessage = err.message || "Có lỗi xảy ra khi đăng nhập!";
-            alert(`Lỗi đăng nhập: ${errorMessage}`);
+            setMessage(`Lỗi đăng nhập: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
@@ -65,6 +66,12 @@ function Login() {
                     >
                         {loading ? "Đang đăng nhập..." : "Đăng Nhập"}
                     </button>
+                    
+                    {message && (
+                        <div className="message" style={{ color: 'red', textAlign: 'center', marginTop: '10px' }}>
+                            {message}
+                        </div>
+                    )}
                 </form>
 
                 <p style={{ textAlign: "center", marginTop: "16px" }}>

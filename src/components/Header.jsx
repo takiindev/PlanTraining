@@ -3,6 +3,7 @@ import { logout, getCurrentUserEmail, getUserByEmail } from "../services/tokenSe
 import { getUserInfo } from "../services/userService";
 import { useNavigate, useLocation } from "react-router-dom";
 import viteLogo from "/vite.svg";
+import "./Header.css";
 
 function Header() {
   const [user, setUser] = useState(null);
@@ -65,97 +66,39 @@ function Header() {
 
   if (loading) {
     return (
-      <header style={{
-        background: "#fff",
-        borderBottom: "1px solid #e2e8f0",
-        padding: "0 20px",
-        height: "64px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-end"
-      }}>
-        <div style={{ color: "#718096" }}>Đang tải...</div>
+      <header className="header-loading">
+        <div className="header-loading-text">Đang tải...</div>
       </header>
     );
   }
 
   return (
-    <header style={{
-      background: "#fff",
-      borderBottom: "1px solid #e2e8f0",
-      padding: "0 20px",
-      height: "64px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      position: "sticky",
-      top: 0,
-      zIndex: 1000,
-      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)"
-    }}>
+    <header className="header">
       {/* Logo/Brand */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px"
-      }}>
+      <div className="header-brand">
         <img 
           src={viteLogo} 
           alt="Logo" 
-          style={{
-            height: "32px",
-            width: "auto"
-          }}
+          className="header-logo"
         />
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <span style={{
-            fontSize: "18px",
-            fontWeight: "bold",
-            color: "#2d3748",
-            lineHeight: "1.2"
-          }}>
+        <div className="header-title-container">
+          <span className="header-title-main">
             PlanTraining
           </span>
-          <span style={{
-            fontSize: "14px",
-            color: "#718096",
-            fontWeight: "500"
-          }}>
+          <span className="header-title-page">
             {getPageTitle(location.pathname)}
           </span>
         </div>
       </div>
 
       {/* User Info */}
-      <div style={{ position: "relative" }}>
+      <div className="header-user-container">
         <div
           onClick={() => setShowDropdown(!showDropdown)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            padding: "8px 16px",
-            borderRadius: "8px",
-            cursor: "pointer",
-            transition: "background-color 0.2s",
-            background: showDropdown ? "#f7fafc" : "transparent"
-          }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = "#f7fafc"}
-          onMouseLeave={(e) => e.target.style.backgroundColor = showDropdown ? "#f7fafc" : "transparent"}
+          className={`header-user-info ${showDropdown ? 'active' : ''}`}
         >
           {/* Avatar */}
-          <div style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "white",
-            fontWeight: "bold",
-            fontSize: "16px"
-          }}>
+          <div className="header-avatar">
             {userInfo ? 
               `${userInfo.lastName.charAt(0)}${userInfo.firstName.charAt(0)}` : 
               user?.email?.charAt(0)?.toUpperCase() || "U"
@@ -163,73 +106,39 @@ function Header() {
           </div>
 
           {/* User Info */}
-          <div style={{ textAlign: "left" }}>
-            <div style={{
-              fontWeight: "600",
-              color: "#2d3748",
-              fontSize: "14px"
-            }}>
+          <div className="header-user-details">
+            <div className="header-user-name">
               {userInfo ? `${userInfo.lastName} ${userInfo.firstName}` : user?.email}
             </div>
           </div>
 
           {/* Dropdown Arrow */}
-          <div style={{
-            color: "#718096",
-            fontSize: "12px",
-            transform: showDropdown ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 0.2s"
-          }}>
+          <div className={`header-dropdown-arrow ${showDropdown ? 'rotated' : ''}`}>
             ▼
           </div>
         </div>
 
         {/* Dropdown Menu */}
         {showDropdown && (
-          <div style={{
-            position: "absolute",
-            top: "100%",
-            right: "0",
-            marginTop: "8px",
-            background: "#fff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "8px",
-            boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
-            minWidth: "200px",
-            zIndex: 1001
-          }}>
+          <div className="header-dropdown">
             {/* User Info Section */}
-            <div style={{
-              padding: "16px",
-              borderBottom: "1px solid #e2e8f0"
-            }}>
-              <div style={{ fontWeight: "600", color: "#2d3748", marginBottom: "4px" }}>
+            <div className="header-dropdown-user-info">
+              <div className="header-dropdown-user-name">
                 {userInfo ? `${userInfo.lastName} ${userInfo.firstName}` : "Người dùng"}
               </div>
-              <div style={{ fontSize: "12px", color: "#718096" }}>
+              <div className="header-dropdown-user-email">
                 {user?.email}
               </div>
             </div>
 
             {/* Menu Items */}
-            <div style={{ padding: "8px 0" }}>
+            <div className="header-dropdown-menu">
               <button
                 onClick={() => {
                   setShowDropdown(false);
                   navigate("/dashboard");
                 }}
-                style={{
-                  width: "100%",
-                  padding: "12px 16px",
-                  border: "none",
-                  background: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  color: "#4a5568"
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = "#f7fafc"}
-                onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
+                className="header-dropdown-item"
               >
                 🏠 Dashboard
               </button>
@@ -237,43 +146,31 @@ function Header() {
               <button
                 onClick={() => {
                   setShowDropdown(false);
+                  navigate("/role-management");
+                }}
+                className="header-dropdown-item"
+              >
+                👥 Quản lý Vai trò
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowDropdown(false);
                   // Navigate to profile page (if exists)
                 }}
-                style={{
-                  width: "100%",
-                  padding: "12px 16px",
-                  border: "none",
-                  background: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  color: "#4a5568"
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = "#f7fafc"}
-                onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
+                className="header-dropdown-item"
               >
                 👤 Hồ sơ cá nhân
               </button>
 
-              <hr style={{ margin: "8px 0", border: "none", borderTop: "1px solid #e2e8f0" }} />
+              <hr className="header-dropdown-divider" />
 
               <button
                 onClick={() => {
                   setShowDropdown(false);
                   handleLogout();
                 }}
-                style={{
-                  width: "100%",
-                  padding: "12px 16px",
-                  border: "none",
-                  background: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  color: "#e53e3e"
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = "#fed7d7"}
-                onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
+                className="header-dropdown-item logout"
               >
                 🚪 Đăng xuất
               </button>

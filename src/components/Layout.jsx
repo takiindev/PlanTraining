@@ -1,4 +1,5 @@
 import Header from "./Header";
+import "./Layout.css";
 
 /**
  * Layout component bao bọc Header và content
@@ -9,9 +10,9 @@ import Header from "./Header";
  */
 function Layout({ children, showHeader = true }) {
   return (
-    <div style={{ minHeight: "100vh", background: "#f7fafc" }}>
+    <div className="layout">
       {showHeader && <Header />}
-      <main style={{ paddingTop: showHeader ? "0" : "0" }}>
+      <main className="layout-main">
         {children}
       </main>
     </div>

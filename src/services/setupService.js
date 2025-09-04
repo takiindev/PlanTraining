@@ -17,8 +17,6 @@ export async function ensureAdminExists() {
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
-      console.log("Không tìm thấy admin nào trong hệ thống");
-      
       // Lấy user đầu tiên để làm admin
       const allUsersQuery = query(collection(db, "users"));
       const allUsersSnapshot = await getDocs(allUsersQuery);
@@ -30,7 +28,6 @@ export async function ensureAdminExists() {
         
         // Nâng cấp user đầu tiên thành admin
         await updateUserRole(userId, "admin");
-        console.log(`Đã nâng cấp user ${userData.lastName} ${userData.firstName} (${userData.email}) thành admin đầu tiên`);
         
         return {
           success: true,
@@ -38,14 +35,12 @@ export async function ensureAdminExists() {
           userId: userId
         };
       } else {
-        console.log("Không có user nào trong hệ thống");
         return {
           success: false,
           message: "Không có user nào trong hệ thống để nâng cấp thành admin"
         };
       }
     } else {
-      console.log("Đã có admin trong hệ thống");
       return {
         success: true,
         message: "Hệ thống đã có admin"
@@ -83,7 +78,6 @@ export async function createSampleMembers(userIds = []) {
       
       for (const user of usersToPromote) {
         await updateUserRole(user.id, "member");
-        console.log(`Đã nâng cấp ${user.lastName} ${user.firstName} thành member`);
       }
       
       return {
@@ -160,7 +154,6 @@ export async function createFakeUsers() {
         email: user.email,
         role: user.role
       });
-      console.log(`Đã tạo fake user: ${user.lastName} ${user.firstName} (${user.role})`);
     }
 
     return {
