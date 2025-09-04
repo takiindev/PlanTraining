@@ -7,10 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "vercel": "vercel",
-    "vercel:dev": "vercel dev",
-    "deploy": "vercel --prod"
+    "preview": "vite preview"
   },
   "dependencies": {
     "firebase": "^12.2.1",
