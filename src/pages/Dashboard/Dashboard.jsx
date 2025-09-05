@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { checkSession, getCurrentUserEmail, getUserByEmail } from "../../services/tokenService";
 import { getUserInfo } from "../../services/userService";
-import { getClassesByMonth, createClass, getMentors, updateClass, deleteClass } from "../../services/classService";
+import { getClassesByMonth, createClass, getMentors, updateClass, deleteClass, subscribeToClassesByMonth } from "../../services/classService";
 import { ensureAdminExists, createSampleMembers } from "../../services/setupService";
+import { useNotification } from "../../contexts/NotificationContext";
 import "./Dashboard.css";
 
 function Dashboard() {
@@ -19,6 +20,7 @@ function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedDateForDetail, setSelectedDateForDetail] = useState(new Date()); // Ngày được chọn để xem chi tiết
   const [editingClass, setEditingClass] = useState(null);
+  const { triggerNotificationRefresh } = useNotification();
   const navigate = useNavigate();
 
   // Helper function để format ngày hôm nay
@@ -127,21 +129,45 @@ function Dashboard() {
 
   useEffect(() => {
     if (userInfo) {
-      loadClasses();
+      setupClassesListener();
       loadMentors();
+      
+      // Kiểm tra nếu có ngày được chọn từ thông báo
+      const selectedDateFromNotification = localStorage.getItem('selectedDate');
+      if (selectedDateFromNotification) {
+        const notificationDate = new Date(selectedDateFromNotification);
+        setSelectedDateForDetail(notificationDate);
+        setCurrentDate(notificationDate); // Cập nhật tháng hiện tại nếu cần
+        localStorage.removeItem('selectedDate'); // Xóa sau khi sử dụng
+      }
     }
   }, [userInfo, currentDate]);
 
-  const loadClasses = async () => {
-    try {
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      const classData = await getClassesByMonth(year, month);
-      setClasses(classData);
-    } catch (error) {
-      console.error("Lỗi khi tải lớp học:", error);
+  // Real-time listener cho classes
+  const setupClassesListener = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    
+    // Unsubscribe listener cũ nếu có
+    if (window.classesUnsubscribe) {
+      window.classesUnsubscribe();
     }
+    
+    // Tạo listener mới
+    window.classesUnsubscribe = subscribeToClassesByMonth(year, month, (classesData) => {
+      console.log("Classes updated via real-time:", classesData.length);
+      setClasses(classesData);
+    });
   };
+
+  // Cleanup listener khi component unmount
+  useEffect(() => {
+    return () => {
+      if (window.classesUnsubscribe) {
+        window.classesUnsubscribe();
+      }
+    };
+  }, []);
 
   const loadMentors = async () => {
     try {
@@ -323,7 +349,9 @@ function Dashboard() {
       }
       
       handleCloseModal(); // Sử dụng function mới để close và reset
-      loadClasses();
+      // Không cần gọi loadClasses() nữa vì real-time listener sẽ tự động cập nhật
+      
+      // Không cần trigger notification refresh nữa vì real-time listener sẽ tự động cập nhật
     } catch (error) {
       console.error("Lỗi khi lưu lớp học:", error);
     }
@@ -336,7 +364,9 @@ function Dashboard() {
       try {
         await deleteClass(editingClass.id);
         handleCloseModal(); // Sử dụng function mới để close và reset
-        loadClasses();
+        // Không cần gọi loadClasses() nữa vì real-time listener sẽ tự động cập nhật
+        
+        // Không cần trigger notification refresh nữa vì real-time listener sẽ tự động cập nhật
       } catch (error) {
         console.error("Lỗi khi xóa lớp học:", error);
       }
@@ -346,7 +376,9 @@ function Dashboard() {
   const handleDeleteClass = async (classId) => {
     try {
       await deleteClass(classId);
-      loadClasses();
+      // Không cần gọi loadClasses() nữa vì real-time listener sẽ tự động cập nhật
+      
+      // Không cần trigger notification refresh nữa vì real-time listener sẽ tự động cập nhật
     } catch (error) {
       console.error("Lỗi khi xóa lớp học:", error);
     }

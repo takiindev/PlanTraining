@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { logout, getCurrentUserEmail, getUserByEmail } from "../services/tokenService";
 import { getUserInfo } from "../services/userService";
+import { getUserRelatedClasses, subscribeToUserRelatedClasses } from "../services/classService";
+import { useNotification } from "../contexts/NotificationContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import viteLogo from "/vite.svg";
 import "./Header.css";
@@ -10,6 +12,9 @@ function Header() {
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const { refreshTrigger } = useNotification();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,6 +47,9 @@ function Header() {
             // Lấy thông tin chi tiết người dùng
             const detailInfo = await getUserInfo(accountData.id);
             setUserInfo(detailInfo);
+            
+            // Lấy thông báo các buổi dạy liên quan
+            setupNotificationsListener(accountData.id);
           }
         }
       } catch (error) {
@@ -53,6 +61,100 @@ function Header() {
 
     loadUserInfo();
   }, []);
+
+  // Setup real-time listener cho notifications
+  const setupNotificationsListener = (userId) => {
+    // Unsubscribe listener cũ nếu có
+    if (window.notificationsUnsubscribe) {
+      window.notificationsUnsubscribe();
+    }
+    
+    // Tạo listener mới
+    window.notificationsUnsubscribe = subscribeToUserRelatedClasses(userId, (userClasses) => {
+      console.log("User classes updated via real-time:", userClasses.length);
+      
+      // Lọc các buổi dạy từ hôm nay đến 7 ngày tới
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+      
+      const upcomingClasses = userClasses.filter(cls => {
+        const classDate = cls.date.toDate ? cls.date.toDate() : new Date(cls.date);
+        classDate.setHours(0, 0, 0, 0);
+        return classDate >= today && classDate <= nextWeek;
+      });
+      
+      console.log("Upcoming classes via real-time:", upcomingClasses.length);
+      setNotifications(upcomingClasses);
+    });
+  };
+
+  // Cleanup listener khi component unmount
+  useEffect(() => {
+    return () => {
+      if (window.notificationsUnsubscribe) {
+        window.notificationsUnsubscribe();
+      }
+    };
+  }, []);
+
+  // Thêm effect để refresh thông báo mỗi 5 phút
+  useEffect(() => {
+    if (user?.id) {
+      const interval = setInterval(() => {
+        loadNotifications(user.id);
+      }, 5 * 60 * 1000); // 5 phút
+
+      return () => clearInterval(interval);
+    }
+  }, [user?.id]);
+
+  // Effect để refresh thông báo khi có trigger từ context
+  useEffect(() => {
+    if (user?.id && refreshTrigger > 0) {
+      console.log("Refreshing notifications due to trigger:", refreshTrigger);
+      loadNotifications(user.id);
+    }
+  }, [refreshTrigger, user?.id]);
+
+  // Thêm effect để refresh thông báo mỗi 5 phút (backup cho trường hợp listener bị lỗi)
+  useEffect(() => {
+    if (user?.id) {
+      const interval = setInterval(() => {
+        console.log("Backup refresh notifications every 5 minutes");
+        // Chỉ làm backup, real-time listener sẽ xử lý chính
+      }, 5 * 60 * 1000); // 5 phút
+
+      return () => clearInterval(interval);
+    }
+  }, [user?.id]);
+
+  const handleNotificationClick = (classItem) => {
+    // Đóng dropdown thông báo
+    setShowNotifications(false);
+    
+    // Chuyển đến dashboard và set ngày được chọn
+    const classDate = classItem.date.toDate ? classItem.date.toDate() : new Date(classItem.date);
+    
+    // Sử dụng localStorage để truyền thông tin ngày được chọn
+    localStorage.setItem('selectedDate', classDate.toISOString());
+    
+    if (location.pathname !== '/dashboard') {
+      navigate('/dashboard');
+    } else {
+      // Nếu đã ở dashboard, reload trang để trigger effect
+      window.location.reload();
+    }
+  };
+
+  const getRoleText = (userRole) => {
+    switch (userRole) {
+      case 'mentor': return 'Mentor chính';
+      case 'support': return 'Mentor hỗ trợ';
+      case 'manager': return 'Người xếp lịch';
+      default: return '';
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -93,6 +195,81 @@ function Header() {
 
       {/* User Info */}
       <div className="header-user-container">
+        {/* Notification Bell */}
+        <div className="header-notifications">
+          <div
+            onClick={() => setShowNotifications(!showNotifications)}
+            className={`notification-bell ${showNotifications ? 'active' : ''}`}
+          >
+            <svg 
+              width="20" 
+              height="20" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            {notifications.length > 0 && (
+              <span className="notification-badge">{notifications.length}</span>
+            )}
+          </div>
+
+          {/* Notifications Dropdown */}
+          {showNotifications && (
+            <div className="notifications-dropdown">
+              <div className="notifications-header">
+                <h4>Buổi dạy sắp tới</h4>
+                <span className="notifications-count">
+                  {notifications.length} thông báo
+                </span>
+              </div>
+              
+              <div className="notifications-list">
+                {notifications.length === 0 ? (
+                  <div className="no-notifications">
+                    <span>📅</span>
+                    <p>Không có buổi dạy nào trong tuần tới</p>
+                  </div>
+                ) : (
+                  notifications.map((notification) => {
+                    const classDate = notification.date.toDate ? notification.date.toDate() : new Date(notification.date);
+                    return (
+                      <div
+                        key={notification.id}
+                        className="notification-item"
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <div className="notification-content">
+                          <div className="notification-title">
+                            {notification.topic}
+                          </div>
+                          <div className="notification-details">
+                            <span className="notification-date">
+                              📅 {classDate.toLocaleDateString('vi-VN')}
+                            </span>
+                            <span className="notification-time">
+                              ⏰ {notification.startTime} - {notification.endTime}
+                            </span>
+                          </div>
+                          <div className="notification-role">
+                            {getRoleText(notification.userRole)}
+                          </div>
+                        </div>
+                        <div className="notification-arrow">→</div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div
           onClick={() => setShowDropdown(!showDropdown)}
           className={`header-user-info ${showDropdown ? 'active' : ''}`}
@@ -180,9 +357,12 @@ function Header() {
       </div>
 
       {/* Click outside to close dropdown */}
-      {showDropdown && (
+      {(showDropdown || showNotifications) && (
         <div
-          onClick={() => setShowDropdown(false)}
+          onClick={() => {
+            setShowDropdown(false);
+            setShowNotifications(false);
+          }}
           style={{
             position: "fixed",
             top: 0,
