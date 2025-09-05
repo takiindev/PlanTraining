@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, collection, getDocs } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, getDocs, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 
 /**
@@ -87,10 +87,15 @@ export async function updateUserRole(userId, newRole) {
       throw new Error("Role không hợp lệ. Chỉ cho phép: user, member, admin");
     }
 
-    await setDoc(doc(db, "users", userId), {
+    console.log(`Updating user ${userId} role to ${newRole}`);
+    
+    // Sử dụng updateDoc thay vì setDoc để trigger real-time listeners
+    await updateDoc(doc(db, "users", userId), {
       role: newRole,
       updatedAt: new Date()
-    }, { merge: true });
+    });
+    
+    console.log(`Role updated successfully for user ${userId}`);
   } catch (error) {
     console.error("Lỗi khi cập nhật role:", error);
     throw error;
@@ -131,6 +136,82 @@ export async function getAllUsers() {
     return users;
   } catch (error) {
     console.error("❌ Lỗi khi lấy danh sách users:", error);
+    throw error;
+  }
+}
+
+/**
+ * Tạo real-time listener cho danh sách users
+ * @param {function} callback - Function được gọi khi dữ liệu thay đổi
+ * @returns {function} Unsubscribe function
+ */
+export function subscribeToUsers(callback) {
+  try {
+    const usersCollection = collection(db, "users");
+    
+    const unsubscribe = onSnapshot(usersCollection, (snapshot) => {
+      const users = [];
+      snapshot.forEach((doc) => {
+        users.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      // Sắp xếp theo role (owner > admin > member > user) rồi theo tên
+      users.sort((a, b) => {
+        const roleOrder = { owner: 4, admin: 3, member: 2, user: 1 };
+        const roleCompare = (roleOrder[b.role] || 0) - (roleOrder[a.role] || 0);
+        if (roleCompare !== 0) return roleCompare;
+        
+        const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+        const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+      
+      console.log("Real-time update - Users loaded:", users.length);
+      callback(users);
+    }, (error) => {
+      console.error("Lỗi real-time listener cho users:", error);
+    });
+    
+    return unsubscribe;
+  } catch (error) {
+    console.error("Lỗi khi tạo listener cho users:", error);
+    throw error;
+  }
+}
+
+/**
+ * Tạo real-time listener cho thông tin user cụ thể
+ * @param {string} userId - ID của user
+ * @param {function} callback - Function được gọi khi dữ liệu thay đổi
+ * @returns {function} Unsubscribe function
+ */
+export function subscribeToUserInfo(userId, callback) {
+  try {
+    const userDoc = doc(db, "users", userId);
+    
+    const unsubscribe = onSnapshot(userDoc, (doc) => {
+      if (doc.exists()) {
+        const userData = {
+          uid: doc.id,
+          id: doc.id,
+          ...doc.data()
+        };
+        console.log("Real-time update - User info:", userData.firstName, userData.lastName);
+        callback(userData);
+      } else {
+        console.log("User document does not exist");
+        callback(null);
+      }
+    }, (error) => {
+      console.error("Lỗi real-time listener cho user info:", error);
+    });
+    
+    return unsubscribe;
+  } catch (error) {
+    console.error("Lỗi khi tạo listener cho user info:", error);
     throw error;
   }
 }

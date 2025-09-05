@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { logout, getCurrentUserEmail, getUserByEmail } from "../services/tokenService";
-import { getUserInfo } from "../services/userService";
+import { getUserInfo, subscribeToUserInfo } from "../services/userService";
 import { getUserRelatedClasses, subscribeToUserRelatedClasses } from "../services/classService";
 import { useNotification } from "../contexts/NotificationContext";
+import { realtimeManager } from "../services/realtimeManager";
+import { appConfig } from "../utils/envUtils";
 import { useNavigate, useLocation } from "react-router-dom";
 import viteLogo from "/vite.svg";
 import "./Header.css";
@@ -30,7 +32,7 @@ function Header() {
       case '/register':
         return 'Đăng ký';
       default:
-        return 'PlanTraining';
+        return appConfig.name;
     }
   };
 
@@ -48,8 +50,8 @@ function Header() {
             const detailInfo = await getUserInfo(accountData.id);
             setUserInfo(detailInfo);
             
-            // Lấy thông báo các buổi dạy liên quan
-            setupNotificationsListener(accountData.id);
+            // Setup real-time listeners cho user info và notifications
+            setupRealTimeListeners(accountData.id);
           }
         }
       } catch (error) {
@@ -62,16 +64,19 @@ function Header() {
     loadUserInfo();
   }, []);
 
-  // Setup real-time listener cho notifications
-  const setupNotificationsListener = (userId) => {
-    // Unsubscribe listener cũ nếu có
-    if (window.notificationsUnsubscribe) {
-      window.notificationsUnsubscribe();
-    }
-    
-    // Tạo listener mới
-    window.notificationsUnsubscribe = subscribeToUserRelatedClasses(userId, (userClasses) => {
-      console.log("User classes updated via real-time:", userClasses.length);
+  // Setup all real-time listeners using realtimeManager
+  const setupRealTimeListeners = (userId) => {
+    // Subscribe to user info changes
+    realtimeManager.subscribeUserInfo(userId, (updatedUserInfo) => {
+      console.log("Header - User info updated via realtime manager:", updatedUserInfo?.firstName);
+      if (updatedUserInfo) {
+        setUserInfo(updatedUserInfo);
+      }
+    }, `header-userInfo-${userId}`);
+
+    // Subscribe to user related classes for notifications
+    realtimeManager.subscribeUserClasses(userId, (userClasses) => {
+      console.log("Header - User classes updated via realtime manager:", userClasses.length);
       
       // Lọc các buổi dạy từ hôm nay đến 7 ngày tới
       const today = new Date();
@@ -84,12 +89,21 @@ function Header() {
         return classDate >= today && classDate <= nextWeek;
       });
       
-      console.log("Upcoming classes via real-time:", upcomingClasses.length);
+      console.log("Header - Upcoming classes via real-time:", upcomingClasses.length);
       setNotifications(upcomingClasses);
-    });
+    }, `header-userClasses-${userId}`);
   };
 
-  // Cleanup listener khi component unmount
+  // Cleanup all listeners khi component unmount
+  useEffect(() => {
+    return () => {
+      // Clean up header-specific listeners
+      if (user?.id) {
+        realtimeManager.unsubscribe(`header-userInfo-${user.id}`);
+        realtimeManager.unsubscribe(`header-userClasses-${user.id}`);
+      }
+    };
+  }, [user?.id]);  // Cleanup listener khi component unmount
   useEffect(() => {
     return () => {
       if (window.notificationsUnsubscribe) {
@@ -185,7 +199,7 @@ function Header() {
         />
         <div className="header-title-container">
           <span className="header-title-main">
-            PlanTraining
+            {appConfig.name}
           </span>
           <span className="header-title-page">
             {getPageTitle(location.pathname)}
@@ -320,15 +334,18 @@ function Header() {
                 🏠 Dashboard
               </button>
               
-              <button
-                onClick={() => {
-                  setShowDropdown(false);
-                  navigate("/role-management");
-                }}
-                className="header-dropdown-item"
-              >
-                👥 Quản lý Vai trò
-              </button>
+              {/* Chỉ hiển thị "Quản lý Vai trò" khi user có role owner */}
+              {userInfo?.role === 'owner' && (
+                <button
+                  onClick={() => {
+                    setShowDropdown(false);
+                    navigate("/role-management");
+                  }}
+                  className="header-dropdown-item"
+                >
+                  👥 Quản lý Vai trò
+                </button>
+              )}
               
               <button
                 onClick={() => {

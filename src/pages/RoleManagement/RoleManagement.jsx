@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAllUsers, updateUserRole, getUserInfo } from "../../services/userService";
+import { getAllUsers, updateUserRole, getUserInfo, subscribeToUsers } from "../../services/userService";
 import { checkSession, getCurrentUserEmail, getUserByEmail } from "../../services/tokenService";
+import { realtimeManager } from "../../services/realtimeManager";
 import "./RoleManagement.css";
 
 function RoleManagement() {
@@ -41,46 +42,59 @@ function RoleManagement() {
     }
   };
 
-  // Load tất cả users cho role management
-  const loadAllUsers = async () => {
-    try {
-      setLoading(true);
-      const users = await getAllUsers();
+  // Load all users với real-time listener
+  const loadAllUsers = () => {
+    setLoading(true);
+    
+    // Sử dụng realtimeManager để subscribe users
+    realtimeManager.subscribeUsers((users) => {
+      console.log("RoleManagement - Users updated via realtime manager:", users.length);
+      console.log("RoleManagement - Users data:", users.map(u => ({ id: u.id, name: `${u.firstName} ${u.lastName}`, role: u.role })));
       setAllUsers(users);
-    } catch (error) {
-      console.error("Lỗi load users:", error);
-    } finally {
       setLoading(false);
-    }
-  };
-
-  // Thay đổi role của user
+    }, 'roleManagement-users');
+  };  // Thay đổi role của user
   const handleRoleChange = async (userId, newRole) => {
     try {
+      console.log(`Attempting to change role for user ${userId} to ${newRole}`);
+      
       // Kiểm tra quyền: chỉ owner mới có thể thay đổi role
       if (currentUser?.role !== "owner") {
+        console.log("Permission denied: Current user is not owner");
         return;
       }
 
       // Không cho phép thay đổi role của chính mình
-      if (userId === currentUser.uid) {
+      if (userId === currentUser.id || userId === currentUser.uid) {
+        console.log("Cannot change own role");
         return;
       }
 
       // Không cho phép thay đổi role của owner khác
-      const targetUser = allUsers.find(user => user.uid === userId);
+      const targetUser = allUsers.find(user => user.id === userId || user.uid === userId);
       if (targetUser?.role === "owner") {
+        console.log("Cannot change role of another owner");
         return;
       }
 
       await updateUserRole(userId, newRole);
       
-      // Reload danh sách users
-      loadAllUsers();
+      // Không cần reload vì real-time listener sẽ tự động cập nhật
+      console.log("Role updated, waiting for real-time sync...");
     } catch (error) {
-      console.error("Lỗi cập nhật role:", error);
+      console.error("Lỗi khi thay đổi role:", error);
     }
   };
+
+  useEffect(() => {
+    loadCurrentUser();
+    loadAllUsers();
+    
+    // Cleanup khi component unmount
+    return () => {
+      realtimeManager.unsubscribe('roleManagement-users');
+    };
+  }, []);
 
   // Load users khi component mount
   useEffect(() => {
@@ -96,7 +110,7 @@ function RoleManagement() {
 
   // Filter users dựa trên search term và role
   const getFilteredUsers = () => {
-    let filteredUsers = allUsers.filter(user => user.uid !== currentUser?.uid);
+    let filteredUsers = allUsers.filter(user => (user.id || user.uid) !== (currentUser?.id || currentUser?.uid));
     
     // Filter theo search term
     if (searchTerm.trim()) {
@@ -184,7 +198,7 @@ function RoleManagement() {
         {/* Results counter */}
         {!loading && allUsers.length > 0 && (
           <div className="results-counter">
-            Hiển thị {getFilteredUsers().length} trên {allUsers.filter(user => user.uid !== currentUser?.uid).length} người dùng
+            Hiển thị {getFilteredUsers().length} trên {allUsers.filter(user => (user.id || user.uid) !== (currentUser?.id || currentUser?.uid)).length} người dùng
           </div>
         )}
 
@@ -217,7 +231,7 @@ function RoleManagement() {
               
               return filteredUsers.map((user) => (
               <div 
-                key={user.uid}
+                key={user.id || user.uid}
                 className="user-card"
               >
                 <div className="user-info">
@@ -236,20 +250,20 @@ function RoleManagement() {
                     <div className="role-tab-buttons">
                       <button
                         className={`role-tab-btn ${user.role === 'user' ? 'active' : ''}`}
-                        onClick={() => handleRoleChange(user.uid, 'user')}
+                        onClick={() => handleRoleChange(user.id || user.uid, 'user')}
                       >
                         User
                       </button>
                       <button
                         className={`role-tab-btn ${user.role === 'member' ? 'active' : ''}`}
-                        onClick={() => handleRoleChange(user.uid, 'member')}
+                        onClick={() => handleRoleChange(user.id || user.uid, 'member')}
                       >
                         Member
                       </button>
                       {currentUser.role === 'owner' && (
                         <button
                           className={`role-tab-btn ${user.role === 'admin' ? 'active' : ''}`}
-                          onClick={() => handleRoleChange(user.uid, 'admin')}
+                          onClick={() => handleRoleChange(user.id || user.uid, 'admin')}
                         >
                           Admin
                         </button>

@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { 
   generateToken, 
@@ -106,7 +106,7 @@ export async function loginAccount(email, password) {
 }
 
 /**
- * Lấy tất cả tài khoản (cho mục đích admin - xóa trong production)
+ * Lấy tất cả tài khoản
  * @returns {Promise<Array>} Mảng tất cả document tài khoản
  */
 export async function getAllAccounts() {
@@ -124,6 +124,37 @@ export async function getAllAccounts() {
     return accounts;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách tài khoản:", error);
+    throw error;
+  }
+}
+
+/**
+ * Tạo real-time listener cho danh sách accounts
+ * @param {function} callback - Function được gọi khi dữ liệu thay đổi
+ * @returns {function} Unsubscribe function
+ */
+export function subscribeToAccounts(callback) {
+  try {
+    const accountsCollection = collection(db, "accounts");
+    
+    const unsubscribe = onSnapshot(accountsCollection, (snapshot) => {
+      const accounts = [];
+      snapshot.forEach((doc) => {
+        accounts.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      console.log("Real-time update - Accounts loaded:", accounts.length);
+      callback(accounts);
+    }, (error) => {
+      console.error("Lỗi real-time listener cho accounts:", error);
+    });
+    
+    return unsubscribe;
+  } catch (error) {
+    console.error("Lỗi khi tạo listener cho accounts:", error);
     throw error;
   }
 }

@@ -2,10 +2,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { checkSession, getCurrentUserEmail, getUserByEmail } from "../../services/tokenService";
-import { getUserInfo } from "../../services/userService";
+import { getUserInfo, subscribeToUserInfo } from "../../services/userService";
 import { getClassesByMonth, createClass, getMentors, updateClass, deleteClass, subscribeToClassesByMonth } from "../../services/classService";
 import { ensureAdminExists, createSampleMembers } from "../../services/setupService";
 import { useNotification } from "../../contexts/NotificationContext";
+import { realtimeManager } from "../../services/realtimeManager";
 import "./Dashboard.css";
 
 function Dashboard() {
@@ -129,7 +130,7 @@ function Dashboard() {
 
   useEffect(() => {
     if (userInfo) {
-      setupClassesListener();
+      setupRealTimeListeners();
       loadMentors();
       
       // Kiểm tra nếu có ngày được chọn từ thông báo
@@ -143,29 +144,32 @@ function Dashboard() {
     }
   }, [userInfo, currentDate]);
 
-  // Real-time listener cho classes
-  const setupClassesListener = () => {
+  // Setup all real-time listeners using realtimeManager
+  const setupRealTimeListeners = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     
-    // Unsubscribe listener cũ nếu có
-    if (window.classesUnsubscribe) {
-      window.classesUnsubscribe();
-    }
-    
-    // Tạo listener mới
-    window.classesUnsubscribe = subscribeToClassesByMonth(year, month, (classesData) => {
-      console.log("Classes updated via real-time:", classesData.length);
+    // Subscribe to classes
+    realtimeManager.subscribeClasses(year, month, (classesData) => {
+      console.log("Classes updated via realtime manager:", classesData.length);
       setClasses(classesData);
     });
+
+    // Subscribe to current user info
+    if (userInfo?.id) {
+      realtimeManager.subscribeUserInfo(userInfo.id, (updatedUserInfo) => {
+        console.log("User info updated via realtime manager:", updatedUserInfo?.firstName);
+        if (updatedUserInfo) {
+          setUserInfo(updatedUserInfo);
+        }
+      });
+    }
   };
 
-  // Cleanup listener khi component unmount
+  // Cleanup all listeners khi component unmount
   useEffect(() => {
     return () => {
-      if (window.classesUnsubscribe) {
-        window.classesUnsubscribe();
-      }
+      realtimeManager.unsubscribeAll();
     };
   }, []);
 
