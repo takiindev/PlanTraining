@@ -27,6 +27,8 @@ function Header() {
         return 'Dashboard';
       case '/role-management':
         return 'Quản lý Vai trò';
+      case '/profile':
+        return 'Hồ sơ cá nhân';
       case '/login':
         return 'Đăng nhập';
       case '/register':
@@ -290,10 +292,29 @@ function Header() {
         >
           {/* Avatar */}
           <div className="header-avatar">
-            {userInfo ? 
-              `${userInfo.lastName.charAt(0)}${userInfo.firstName.charAt(0)}` : 
-              user?.email?.charAt(0)?.toUpperCase() || "U"
-            }
+            {userInfo?.avatarUrl ? (
+              <img 
+                src={userInfo.avatarUrl} 
+                alt="Avatar" 
+                className="header-avatar-image"
+                onError={(e) => {
+                  // Fallback về text initials nếu ảnh load lỗi
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div 
+              className="header-avatar-text"
+              style={{ 
+                display: userInfo?.avatarUrl ? 'none' : 'flex' 
+              }}
+            >
+              {userInfo ? 
+                `${userInfo.lastName.charAt(0)}${userInfo.firstName.charAt(0)}` : 
+                user?.email?.charAt(0)?.toUpperCase() || "U"
+              }
+            </div>
           </div>
 
           {/* User Info */}
@@ -350,7 +371,7 @@ function Header() {
               <button
                 onClick={() => {
                   setShowDropdown(false);
-                  // Navigate to profile page (if exists)
+                  navigate("/profile");
                 }}
                 className="header-dropdown-item"
               >

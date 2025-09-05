@@ -37,15 +37,24 @@ export async function saveUserInfo(userId, userInfo) {
  */
 export async function getUserInfo(userId) {
   try {
+    console.log("UserService - Đang lấy user info cho ID:", userId);
+    const startTime = Date.now();
+    
     const userDoc = await getDoc(doc(db, "users", userId));
     
+    const duration = Date.now() - startTime;
+    console.log(`UserService - getUserInfo hoàn tất trong ${duration}ms`);
+    
     if (userDoc.exists()) {
-      return {
+      const result = {
         uid: userDoc.id, // Document ID chính là Firebase Auth UID
         id: userDoc.id,  // Giữ lại cho tương thích
         ...userDoc.data()
       };
+      console.log("UserService - User info found:", result);
+      return result;
     } else {
+      console.log("UserService - Không tìm thấy user info cho ID:", userId);
       return null;
     }
   } catch (error) {

@@ -60,6 +60,15 @@ export const appConfig = {
 };
 
 /**
+ * Cấu hình Cloudinary từ biến môi trường
+ */
+export const cloudinaryConfig = {
+  cloudName: getEnvVar('VITE_CLOUDINARY_CLOUD_NAME'),
+  apiKey: getEnvVar('VITE_CLOUDINARY_API_KEY'),
+  apiSecret: getEnvVar('VITE_CLOUDINARY_API_SECRET')
+};
+
+/**
  * Danh sách tất cả biến môi trường cần thiết cho Firebase
  */
 export const REQUIRED_FIREBASE_ENV_VARS = [
@@ -69,4 +78,12 @@ export const REQUIRED_FIREBASE_ENV_VARS = [
   'VITE_FIREBASE_STORAGE_BUCKET',
   'VITE_FIREBASE_MESSAGING_SENDER_ID',
   'VITE_FIREBASE_APP_ID'
+];
+
+/**
+ * Danh sách tất cả biến môi trường cần thiết cho Cloudinary
+ */
+export const REQUIRED_CLOUDINARY_ENV_VARS = [
+  'VITE_CLOUDINARY_CLOUD_NAME',
+  'VITE_CLOUDINARY_API_KEY'
 ];

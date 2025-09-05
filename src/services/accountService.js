@@ -158,3 +158,47 @@ export function subscribeToAccounts(callback) {
     throw error;
   }
 }
+
+/**
+ * Cập nhật mật khẩu người dùng
+ * @param {string} email - Email người dùng
+ * @param {string} currentPassword - Mật khẩu hiện tại
+ * @param {string} newPassword - Mật khẩu mới
+ * @returns {Promise<void>}
+ */
+export async function updateUserPassword(email, currentPassword, newPassword) {
+  try {
+    // Lấy thông tin tài khoản
+    const accountData = await getUserByEmail(email);
+    if (!accountData) {
+      throw new Error("Tài khoản không tồn tại");
+    }
+
+    // Verify mật khẩu hiện tại
+    const isCurrentPasswordValid = await verifyPassword(
+      currentPassword + accountData.salt, 
+      accountData.password
+    );
+    
+    if (!isCurrentPasswordValid) {
+      throw new Error("Mật khẩu hiện tại không đúng");
+    }
+
+    // Tạo salt mới và hash mật khẩu mới
+    const newSalt = generateSalt();
+    const hashedNewPassword = await hashPassword(newPassword + newSalt);
+
+    // Cập nhật mật khẩu trong database
+    const accountRef = doc(db, "accounts", accountData.id);
+    await updateDoc(accountRef, {
+      password: hashedNewPassword,
+      salt: newSalt,
+      updatedAt: new Date()
+    });
+
+    console.log("Mật khẩu đã được cập nhật thành công");
+  } catch (error) {
+    console.error("Lỗi khi cập nhật mật khẩu:", error);
+    throw error;
+  }
+}

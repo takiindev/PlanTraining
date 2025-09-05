@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard/Dashboard'
 import Register from './pages/Register/Register'
 import Login from './pages/Login/Login'
 import RoleManagement from './pages/RoleManagement/RoleManagement'
+import Profile from './pages/Profile/Profile'
 import ProtectedRoute from './components/ProtectedRoute'
 import { NotificationProvider } from './contexts/NotificationContext'
 
@@ -33,6 +34,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <RoleManagement />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             } 
           />

@@ -1,0 +1,111 @@
+/* Avatar Crop Component Styles */
+.avatar-crop-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.avatar-crop-header {
+  text-align: center;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.avatar-crop-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.avatar-crop-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.avatar-crop-content {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 90vw;
+  max-height: 60vh;
+  overflow: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.avatar-crop-image {
+  max-width: 100%;
+  max-height: 50vh;
+  display: block;
+}
+
+.avatar-crop-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.avatar-crop-cancel-btn,
+.avatar-crop-confirm-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.avatar-crop-cancel-btn {
+  background-color: #6b7280;
+  color: white;
+}
+
+.avatar-crop-cancel-btn:hover:not(:disabled) {
+  background-color: #4b5563;
+}
+
+.avatar-crop-confirm-btn {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.avatar-crop-confirm-btn:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.avatar-crop-cancel-btn:disabled,
+.avatar-crop-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .avatar-crop-container {
+    padding: 10px;
+  }
+  
+  .avatar-crop-content {
+    padding: 15px;
+  }
+  
+  .avatar-crop-actions {
+    flex-direction: column;
+  }
+  
+  .avatar-crop-cancel-btn,
+  .avatar-crop-confirm-btn {
+    width: 100%;
+  }
+}
