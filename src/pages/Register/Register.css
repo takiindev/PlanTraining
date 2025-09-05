@@ -1,46 +1,84 @@
 .register {
     width: 100vw;
-    height: 100dvh;
+    height: 100vh;
+    overflow-y: scroll;
     background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
-    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
+    box-sizing: border-box;
 }
 
 .register-container {
     width: 100%;
-    max-width: 420px;
+    max-width: 520px; /* Tăng width cho layout 2 cột */
     padding: 40px;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    box-sizing: border-box;
+}
+
+/* Desktop/Tablet Responsive */
+@media (min-width: 769px) {
+    .register-container {
+        max-width: 600px;
+        padding: 48px;
+    }
 }
 
 /* Mobile Responsive */
+@media (max-width: 1024px) {
+    .register-container {
+        max-width: 480px;
+        padding: 36px 28px;
+    }
+}
+
 @media (max-width: 768px) {
     .register {
+        height: 100%;
         padding: 16px;
+        padding-top: 20px;
     }
     
     .register-container {
         padding: 32px 24px;
-        max-width: 100%;
+        max-width: 90%;
         border-radius: 12px;
+        min-height: auto;
     }
 }
 
 @media (max-width: 480px) {
     .register {
         padding: 12px;
+        padding-top: 20px;
+        padding-bottom: 20px;
     }
     
     .register-container {
-        padding: 24px 20px;
+        padding: 28px 20px;
+        border-radius: 12px;
+        max-width: 95%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+}
+
+@media (max-width: 360px) {
+    .register {
+        padding: 8px;
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+    
+    .register-container {
+        padding: 24px 16px;
         border-radius: 8px;
+        max-width: 98%;
     }
 }
 
@@ -59,10 +97,24 @@
     gap: 24px;
 }
 
+/* Form row layout for desktop/tablet */
+.form-row {
+    display: flex;
+    gap: 16px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
 .form-group {
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+.form-group-full {
+    width: 100%;
 }
 
 .form-label {
@@ -72,7 +124,26 @@
     letter-spacing: 0.025em;
 }
 
+/* Mobile: Stack form fields vertically */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 24px;
+    }
+    
+    .form-row .form-group {
+        flex: none;
+    }
+}
+
 /* Mobile Form Responsive */
+@media (max-width: 1024px) {
+    .register-title {
+        font-size: 26px;
+        margin-bottom: 30px;
+    }
+}
+
 @media (max-width: 768px) {
     .register-title {
         font-size: 24px;
@@ -81,6 +152,18 @@
     
     .register-form {
         gap: 20px;
+    }
+    
+    .form-input {
+        padding: 14px 16px;
+        font-size: 16px; /* Prevent zoom on iOS */
+        border-radius: 8px;
+    }
+    
+    .register-btn {
+        padding: 14px;
+        font-size: 16px;
+        border-radius: 8px;
     }
 }
 
@@ -92,6 +175,97 @@
     
     .register-form {
         gap: 18px;
+    }
+    
+    .form-input {
+        padding: 12px 14px;
+        font-size: 16px;
+    }
+    
+    .register-btn {
+        padding: 12px;
+        font-size: 15px;
+        font-weight: 600;
+    }
+    
+    .login-link {
+        font-size: 14px;
+        margin-top: 16px;
+    }
+}
+
+@media (max-width: 360px) {
+    .register-title {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .register-form {
+        gap: 16px;
+    }
+    
+    .form-input {
+        padding: 10px 12px;
+        font-size: 15px;
+    }
+    
+    .register-btn {
+        padding: 10px;
+        font-size: 14px;
+    }
+}
+
+/* Landscape orientation for mobile */
+@media (max-height: 600px) and (orientation: landscape) {
+    .register {
+        padding: 8px;
+        align-items: flex-start;
+        padding-top: 20px;
+    }
+    
+    .register-container {
+        padding: 20px 24px;
+        max-width: 400px;
+    }
+    
+    .register-title {
+        font-size: 20px;
+        margin-bottom: 16px;
+    }
+    
+    .register-form {
+        gap: 12px;
+    }
+    
+    .form-input {
+        padding: 8px 12px;
+    }
+    
+    .register-btn {
+        padding: 8px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 320px) {
+    .register-container {
+        padding: 20px 12px;
+        max-width: 99%;
+    }
+    
+    .register-title {
+        font-size: 18px;
+        margin-bottom: 16px;
+    }
+    
+    .form-input {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+    
+    .register-btn {
+        padding: 8px;
+        font-size: 13px;
     }
 }
 
@@ -133,4 +307,62 @@
 
 .register-button:active {
     transform: translateY(0);
+}
+
+/* Handle virtual keyboard on mobile */
+@media (max-height: 600px) {
+    .register {
+        align-items: flex-start;
+        padding-top: 60px;
+        padding-bottom: 60px;
+    }
+}
+
+/* Mobile: use flex-start with padding when screen is too short */
+@media (max-width: 480px) and (max-height: 680px) {
+    .register {
+        align-items: flex-start;
+        padding-top: 40px;
+        padding-bottom: 40px;
+    }
+}
+
+/* iPad: use flex-start with padding when screen is too short */
+@media (min-width: 481px) and (max-width: 768px) and (max-height: 900px) {
+    .register {
+        align-items: flex-start;
+        padding-top: 80px;
+        padding-bottom: 80px;
+    }
+}
+
+/* Desktop: use flex-start with padding when screen is too short */
+@media (min-width: 769px) and (max-height: 700px) {
+    .register {
+        align-items: flex-start;
+        padding-top: 100px;
+        padding-bottom: 100px;
+    }
+}
+
+/* Handle landscape mode on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+    .register {
+        padding-top: 10px;
+        padding-bottom: 10px;
+        align-items: flex-start;
+    }
+    
+    .register-container {
+        padding: 20px;
+    }
+    
+    .register-title {
+        margin-bottom: 16px;
+        font-size: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 12px;
+    }
 }

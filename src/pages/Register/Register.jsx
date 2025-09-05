@@ -53,31 +53,34 @@ function Register() {
             <div className="register-container">
                 <h1 className="register-title">Đăng Ký</h1>
                 <form className="register-form" onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="lastName">Họ và tên đệm:</label>
-                        <input
-                            className="form-input"
-                            type="text"
-                            id="lastName"
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                            placeholder="Ví dụ: Nguyễn Văn"
-                            required
-                        />
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="lastName">Họ và tên đệm:</label>
+                            <input
+                                className="form-input"
+                                type="text"
+                                id="lastName"
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                                placeholder="Ví dụ: Nguyễn Văn"
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="firstName">Tên:</label>
+                            <input
+                                className="form-input"
+                                type="text"
+                                id="firstName"
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                                placeholder="Ví dụ: An"
+                                required
+                            />
+                        </div>
                     </div>
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="firstName">Tên:</label>
-                        <input
-                            className="form-input"
-                            type="text"
-                            id="firstName"
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                            placeholder="Ví dụ: An"
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
+                    
+                    <div className="form-group form-group-full">
                         <label className="form-label" htmlFor="email">Email:</label>
                         <input
                             className="form-input"
@@ -88,30 +91,34 @@ function Register() {
                             required
                         />
                     </div>
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="password">Password:</label>
-                        <input
-                            className="form-input"
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
+                    
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="password">Mật khẩu:</label>
+                            <input
+                                className="form-input"
+                                type="password"
+                                id="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="confirmPassword">Xác nhận mật khẩu:</label>
+                            <input
+                                className="form-input"
+                                type="password"
+                                id="confirmPassword"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required
+                            />
+                        </div>
                     </div>
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="confirmPassword">Confirm Password:</label>
-                        <input
-                            className="form-input"
-                            type="password"
-                            id="confirmPassword"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            required
-                        />
-                    </div>
+                    
                     <button className="register-button" type="submit" disabled={loading}>
-                        {loading ? "Registering..." : "Register"}
+                        {loading ? "Đang đăng ký..." : "Đăng Ký"}
                     </button>
                     
                     {message && (
