@@ -37,13 +37,11 @@ export async function saveUserInfo(userId, userInfo) {
  */
 export async function getUserInfo(userId) {
   try {
-    console.log("UserService - Đang lấy user info cho ID:", userId);
     const startTime = Date.now();
     
     const userDoc = await getDoc(doc(db, "users", userId));
     
     const duration = Date.now() - startTime;
-    console.log(`UserService - getUserInfo hoàn tất trong ${duration}ms`);
     
     if (userDoc.exists()) {
       const result = {
@@ -51,10 +49,8 @@ export async function getUserInfo(userId) {
         id: userDoc.id,  // Giữ lại cho tương thích
         ...userDoc.data()
       };
-      console.log("UserService - User info found:", result);
       return result;
     } else {
-      console.log("UserService - Không tìm thấy user info cho ID:", userId);
       return null;
     }
   } catch (error) {
@@ -96,7 +92,6 @@ export async function updateUserRole(userId, newRole) {
       throw new Error("Role không hợp lệ. Chỉ cho phép: user, member, admin");
     }
 
-    console.log(`Updating user ${userId} role to ${newRole}`);
     
     // Sử dụng updateDoc thay vì setDoc để trigger real-time listeners
     await updateDoc(doc(db, "users", userId), {
@@ -104,7 +99,6 @@ export async function updateUserRole(userId, newRole) {
       updatedAt: new Date()
     });
     
-    console.log(`Role updated successfully for user ${userId}`);
   } catch (error) {
     console.error("Lỗi khi cập nhật role:", error);
     throw error;
@@ -178,7 +172,6 @@ export function subscribeToUsers(callback) {
         return nameA.localeCompare(nameB);
       });
       
-      console.log("Real-time update - Users loaded:", users.length);
       callback(users);
     }, (error) => {
       console.error("Lỗi real-time listener cho users:", error);
@@ -208,10 +201,8 @@ export function subscribeToUserInfo(userId, callback) {
           id: doc.id,
           ...doc.data()
         };
-        console.log("Real-time update - User info:", userData.firstName, userData.lastName);
         callback(userData);
       } else {
-        console.log("User document does not exist");
         callback(null);
       }
     }, (error) => {

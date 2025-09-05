@@ -16,9 +16,16 @@ function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [forceUpdate, setForceUpdate] = useState(0);
   const { refreshTrigger } = useNotification();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (userInfo) {
+      setForceUpdate(prev => prev + 1);
+    }
+  }, [userInfo]);
 
   // Function để lấy title theo pathname
   const getPageTitle = (pathname) => {
@@ -70,15 +77,19 @@ function Header() {
   const setupRealTimeListeners = (userId) => {
     // Subscribe to user info changes
     realtimeManager.subscribeUserInfo(userId, (updatedUserInfo) => {
-      console.log("Header - User info updated via realtime manager:", updatedUserInfo?.firstName);
       if (updatedUserInfo) {
         setUserInfo(updatedUserInfo);
+        
+        // Force re-render nếu có avatar mới
+        if (updatedUserInfo.avatarUrl && updatedUserInfo.avatarUrl !== userInfo?.avatarUrl) {
+          // Trigger component re-render
+          setUserInfo({...updatedUserInfo});
+        }
       }
     }, `header-userInfo-${userId}`);
 
     // Subscribe to user related classes for notifications
     realtimeManager.subscribeUserClasses(userId, (userClasses) => {
-      console.log("Header - User classes updated via realtime manager:", userClasses.length);
       
       // Lọc các buổi dạy từ hôm nay đến 7 ngày tới
       const today = new Date();
@@ -91,7 +102,6 @@ function Header() {
         return classDate >= today && classDate <= nextWeek;
       });
       
-      console.log("Header - Upcoming classes via real-time:", upcomingClasses.length);
       setNotifications(upcomingClasses);
     }, `header-userClasses-${userId}`);
   };
@@ -106,6 +116,25 @@ function Header() {
       }
     };
   }, [user?.id]);  // Cleanup listener khi component unmount
+  
+  // Listen for storage changes để update khi avatar thay đổi
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'cachedUserInfo') {
+        try {
+          const newUserInfo = JSON.parse(e.newValue);
+          if (newUserInfo && newUserInfo.avatarUrl !== userInfo?.avatarUrl) {
+            setUserInfo(newUserInfo);
+          }
+        } catch (error) {
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [userInfo?.avatarUrl]);
+  
   useEffect(() => {
     return () => {
       if (window.notificationsUnsubscribe) {
@@ -128,7 +157,6 @@ function Header() {
   // Effect để refresh thông báo khi có trigger từ context
   useEffect(() => {
     if (user?.id && refreshTrigger > 0) {
-      console.log("Refreshing notifications due to trigger:", refreshTrigger);
       loadNotifications(user.id);
     }
   }, [refreshTrigger, user?.id]);
@@ -137,7 +165,6 @@ function Header() {
   useEffect(() => {
     if (user?.id) {
       const interval = setInterval(() => {
-        console.log("Backup refresh notifications every 5 minutes");
         // Chỉ làm backup, real-time listener sẽ xử lý chính
       }, 5 * 60 * 1000); // 5 phút
 
@@ -297,6 +324,9 @@ function Header() {
                 src={userInfo.avatarUrl} 
                 alt="Avatar" 
                 className="header-avatar-image"
+                key={userInfo.avatarUrl} // Force re-render when URL changes
+                onLoad={() => {
+                }}
                 onError={(e) => {
                   // Fallback về text initials nếu ảnh load lỗi
                   e.target.style.display = 'none';
@@ -355,8 +385,10 @@ function Header() {
                 🏠 Dashboard
               </button>
               
-              {/* Chỉ hiển thị "Quản lý Vai trò" khi user có role owner */}
-              {userInfo?.role === 'owner' && (
+              {/* Chỉ hiển thị "Quản lý Vai trò" khi user có role owner hoặc admin */}
+              {(() => {
+                return userInfo?.role === 'owner' || userInfo?.role === 'admin';
+              })() && (
                 <button
                   onClick={() => {
                     setShowDropdown(false);

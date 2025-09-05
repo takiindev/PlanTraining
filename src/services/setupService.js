@@ -47,7 +47,6 @@ export async function ensureAdminExists() {
       };
     }
   } catch (error) {
-    console.error("Lỗi khi kiểm tra admin:", error);
     throw error;
   }
 }
@@ -98,7 +97,6 @@ export async function createSampleMembers(userIds = []) {
       };
     }
   } catch (error) {
-    console.error("Lỗi khi tạo member mẫu:", error);
     throw error;
   }
 }
@@ -162,7 +160,6 @@ export async function createFakeUsers() {
       message: `Đã tạo ${fakeUsers.length} fake users để testing`
     };
   } catch (error) {
-    console.error("Lỗi khi tạo fake users:", error);
     throw error;
   }
 }

@@ -30,11 +30,12 @@ function RoleManagement() {
         const userInfo = await getUserInfo(user.id);
         setCurrentUser(userInfo);
         
-        // Kiểm tra quyền owner
-        if (userInfo?.role !== "owner") {
+        // Kiểm tra quyền owner hoặc admin
+        if (userInfo?.role !== "owner" && userInfo?.role !== "admin") {
           navigate("/dashboard");
           return;
         }
+        
       }
     } catch (error) {
       console.error("Lỗi load user info:", error);
@@ -48,39 +49,52 @@ function RoleManagement() {
     
     // Sử dụng realtimeManager để subscribe users
     realtimeManager.subscribeUsers((users) => {
-      console.log("RoleManagement - Users updated via realtime manager:", users.length);
-      console.log("RoleManagement - Users data:", users.map(u => ({ id: u.id, name: `${u.firstName} ${u.lastName}`, role: u.role })));
-      setAllUsers(users);
+      // Safety check for users array
+      if (Array.isArray(users)) {
+        setAllUsers(users);
+      } else {
+        setAllUsers([]);
+      }
+      
       setLoading(false);
     }, 'roleManagement-users');
-  };  // Thay đổi role của user
+  };
+
+  // Thay đổi role của user
   const handleRoleChange = async (userId, newRole) => {
     try {
-      console.log(`Attempting to change role for user ${userId} to ${newRole}`);
-      
-      // Kiểm tra quyền: chỉ owner mới có thể thay đổi role
-      if (currentUser?.role !== "owner") {
-        console.log("Permission denied: Current user is not owner");
+      // Kiểm tra quyền: owner hoặc admin mới có thể thay đổi role
+      if (currentUser?.role !== "owner" && currentUser?.role !== "admin") {
         return;
       }
 
       // Không cho phép thay đổi role của chính mình
       if (userId === currentUser.id || userId === currentUser.uid) {
-        console.log("Cannot change own role");
         return;
       }
 
-      // Không cho phép thay đổi role của owner khác
+      // Lấy thông tin user được thay đổi
       const targetUser = allUsers.find(user => user.id === userId || user.uid === userId);
-      if (targetUser?.role === "owner") {
-        console.log("Cannot change role of another owner");
+      
+      // Admin không được thay đổi role của owner hoặc admin khác
+      if (currentUser?.role === "admin") {
+        if (targetUser?.role === "owner" || targetUser?.role === "admin") {
+          return;
+        }
+        // Admin chỉ có thể set role: user, member
+        if (newRole === "admin" || newRole === "owner") {
+          return;
+        }
+      }
+
+      // Owner không được thay đổi role của owner khác
+      if (targetUser?.role === "owner" && currentUser?.role === "owner") {
         return;
       }
 
       await updateUserRole(userId, newRole);
       
       // Không cần reload vì real-time listener sẽ tự động cập nhật
-      console.log("Role updated, waiting for real-time sync...");
     } catch (error) {
       console.error("Lỗi khi thay đổi role:", error);
     }
@@ -110,21 +124,24 @@ function RoleManagement() {
 
   // Filter users dựa trên search term và role
   const getFilteredUsers = () => {
-    let filteredUsers = allUsers.filter(user => (user.id || user.uid) !== (currentUser?.id || currentUser?.uid));
+    // Safety check: ensure allUsers is array and filter out null/undefined users
+    const safeAllUsers = Array.isArray(allUsers) ? allUsers.filter(user => user != null) : [];
+    
+    let filteredUsers = safeAllUsers.filter(user => (user.id || user.uid) !== (currentUser?.id || currentUser?.uid));
     
     // Filter theo search term
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       filteredUsers = filteredUsers.filter(user => 
-        user.firstName?.toLowerCase().includes(searchLower) ||
-        user.lastName?.toLowerCase().includes(searchLower) ||
-        user.email?.toLowerCase().includes(searchLower)
+        user?.firstName?.toLowerCase().includes(searchLower) ||
+        user?.lastName?.toLowerCase().includes(searchLower) ||
+        user?.email?.toLowerCase().includes(searchLower)
       );
     }
     
     // Filter theo role
     if (selectedRole !== "all") {
-      filteredUsers = filteredUsers.filter(user => user.role === selectedRole);
+      filteredUsers = filteredUsers.filter(user => user?.role === selectedRole);
     }
     
     return filteredUsers;
@@ -141,7 +158,12 @@ function RoleManagement() {
 
       <div className="page-content">
         <div className="role-management-info">
-          <strong>Chỉ Owner mới có quyền quản lý vai trò của tất cả thành viên</strong>
+          <strong>
+            {currentUser?.role === 'owner' 
+              ? 'Owner có quyền quản lý vai trò của tất cả thành viên' 
+              : 'Admin có quyền quản lý vai trò User và Member'
+            }
+          </strong>
         </div>
 
         {/* Search và Filter Controls */}
@@ -204,47 +226,56 @@ function RoleManagement() {
 
         {loading ? (
           <div className="loading-container">
-            Đang tải danh sách người dùng...
+            <div className="loading-spinner"></div>
+            <p>Đang tải danh sách người dùng...</p>
+          </div>
+        ) : allUsers.length === 0 ? (
+          <div className="loading-container">
+            <p>Không có dữ liệu người dùng hoặc đang kết nối...</p>
+            <button 
+              onClick={() => {
+                loadAllUsers();
+              }}
+              className="retry-btn"
+            >
+              Thử lại
+            </button>
           </div>
         ) : (
           <div className="user-list">
             {(() => {
               const filteredUsers = getFilteredUsers();
               
-              if (allUsers.length === 0) {
-                return (
-                  <div className="loading-container">
-                    Đang tải danh sách người dùng...
-                  </div>
-                );
-              }
-              
               if (filteredUsers.length === 0) {
                 return (
-                  <div className="loading-container">
-                    {searchTerm || selectedRole !== "all" 
-                      ? "Không tìm thấy người dùng nào phù hợp với bộ lọc" 
-                      : "Không có thành viên nào khác để quản lý"}
+                  <div className="no-results">
+                    <p>
+                      {searchTerm || selectedRole !== "all" 
+                        ? "Không tìm thấy người dùng nào phù hợp với bộ lọc" 
+                        : "Không có thành viên nào khác để quản lý"}
+                    </p>
                   </div>
                 );
               }
               
-              return filteredUsers.map((user) => (
+              return filteredUsers
+                .filter(user => user != null) // Filter out null users
+                .map((user) => (
               <div 
                 key={user.id || user.uid}
                 className="user-card"
               >
                 <div className="user-info">
-                  <div className="user-name">
-                     {user.lastName} {user.firstName}
+                  <div className="user-name" title={`${user.lastName || ''} ${user.firstName || ''}`}>
+                     {user.lastName || ''} {user.firstName || ''}
                   </div>
-                  <div className="user-email">
-                    {user.email}
+                  <div className="user-email" title={user.email || 'Email không có'}>
+                    {user.email || 'Email không có'}
                   </div>
                 </div>
                 
                 <div className="user-actions">
-                  {user.role === "owner" ? (
+                  {(user.role === "owner" || (currentUser?.role === "admin" && (user.role === "admin" || user.role === "owner"))) ? (
                     <span className="no-change-text">Không thể thay đổi</span>
                   ) : (
                     <div className="role-tab-buttons">
@@ -260,13 +291,15 @@ function RoleManagement() {
                       >
                         Member
                       </button>
-                      {currentUser.role === 'owner' && (
-                        <button
-                          className={`role-tab-btn ${user.role === 'admin' ? 'active' : ''}`}
-                          onClick={() => handleRoleChange(user.id || user.uid, 'admin')}
-                        >
-                          Admin
-                        </button>
+                      {currentUser?.role === 'owner' && (
+                        <>
+                          <button
+                            className={`role-tab-btn ${user.role === 'admin' ? 'active' : ''}`}
+                            onClick={() => handleRoleChange(user.id || user.uid, 'admin')}
+                          >
+                            Admin
+                          </button>
+                        </>
                       )}
                     </div>
                   )}

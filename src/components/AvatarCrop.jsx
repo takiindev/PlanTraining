@@ -31,9 +31,9 @@ function AvatarCrop({ onCropComplete, onCancel, imageFile }) {
       makeAspectCrop(
         {
           unit: '%',
-          width: 80,
+          width: 70, // Tăng lên 70% để dễ crop hơn
         },
-        1, // Aspect ratio 1:1
+        1, // Aspect ratio 1:1 (vuông)
         width,
         height
       ),
@@ -67,8 +67,8 @@ function AvatarCrop({ onCropComplete, onCancel, imageFile }) {
       const scaleX = image.naturalWidth / image.width;
       const scaleY = image.naturalHeight / image.height;
 
-      // Set kích thước canvas (avatar sẽ là 300x300px)
-      const cropSize = 300;
+      // Set kích thước canvas (avatar sẽ là 200x200px thay vì 300x300px)
+      const cropSize = 200;
       canvas.width = cropSize;
       canvas.height = cropSize;
 
@@ -125,10 +125,13 @@ function AvatarCrop({ onCropComplete, onCancel, imageFile }) {
             crop={crop}
             onChange={(_, percentCrop) => setCrop(percentCrop)}
             onComplete={(c) => setCompletedCrop(c)}
-            aspect={1} // Tỷ lệ 1:1
-            minWidth={100}
-            minHeight={100}
+            aspect={1} // Tỷ lệ 1:1 (vuông)
+            minWidth={80} // Tăng từ 60 lên 80 để đảm bảo chất lượng
+            minHeight={80} // Tăng từ 60 lên 80 để đảm bảo chất lượng
+            maxWidth={300} // Giới hạn kích thước tối đa
+            maxHeight={300}
             keepSelection
+            ruleOfThirds // Hiển thị lưới để dễ crop
           >
             <img
               ref={imgRef}

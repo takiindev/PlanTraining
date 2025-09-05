@@ -1,33 +1,57 @@
 import { cloudinaryConfig } from '../utils/envUtils';
 
 /**
- * Service để quản lý upload avatar lên Cloudinary
- */
-
-/**
  * Upload avatar lên Cloudinary
- * @param {File} file - File ảnh đã được crop
+ * @param {File} file - File ảnh cần upload
  * @param {string} userId - ID người dùng
  * @param {string} email - Email người dùng
  * @returns {Promise<string>} URL của ảnh trên Cloudinary
  */
 export async function uploadAvatar(file, userId, email) {
   try {
-    // Tạo FormData để upload
+    // Tạo FormData
     const formData = new FormData();
-    
-    // Tên file theo format: userId_email.jpg
-    const fileName = `${userId}_${email.replace('@', '_at_').replace('.', '_')}`;
+    const fileName = `avatar_${userId}_${Date.now()}`;
     
     formData.append('file', file);
-    formData.append('upload_preset', 'unsigned_upload'); // Cần tạo unsigned preset trên Cloudinary
-    formData.append('folder', 'avatar');
+    formData.append('upload_preset', cloudinaryConfig.uploadPreset);
     formData.append('public_id', fileName);
-    formData.append('format', 'jpg');
-    formData.append('quality', 'auto');
-    formData.append('fetch_format', 'auto');
+    formData.append('folder', 'avatars');
+    formData.append('resource_type', 'image');
 
-    // Upload lên Cloudinary
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`;
+    
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      body: formData
+    });
+
+    const responseText = await response.text();
+    
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${responseText}`);
+    }
+
+    const result = JSON.parse(responseText);
+    
+    return result.secure_url;
+  } catch (error) {
+    console.error('Upload error:', error);
+    
+    // Thử fallback upload
+    return await uploadAvatarFallback(file, userId, email);
+  }
+}
+
+/**
+ * Fallback upload nếu upload chính thất bại
+ */
+async function uploadAvatarFallback(file, userId, email) {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', cloudinaryConfig.apiKey);
+    
     const response = await fetch(
       `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
       {
@@ -36,17 +60,17 @@ export async function uploadAvatar(file, userId, email) {
       }
     );
 
-    if (!response.ok) {
-      throw new Error(`Upload failed: ${response.statusText}`);
-    }
+    const responseText = await response.text();
 
-    const result = await response.json();
-    console.log('Avatar uploaded to Cloudinary:', result.secure_url);
-    
-    return result.secure_url;
+    if (response.ok) {
+      const result = JSON.parse(responseText);
+      return result.secure_url;
+    } else {
+      throw new Error(`Fallback failed: ${response.status} - ${responseText}`);
+    }
   } catch (error) {
-    console.error('Lỗi khi upload avatar:', error);
-    throw error;
+    console.error('Fallback upload failed:', error);
+    throw new Error(`Không thể upload avatar. Chi tiết: ${error.message}`);
   }
 }
 
@@ -56,41 +80,50 @@ export async function uploadAvatar(file, userId, email) {
  * @param {string} email - Email người dùng
  * @returns {string} URL của avatar
  */
-export function getAvatarUrl(userId, email) {
-  const fileName = `${userId}_${email.replace('@', '_at_').replace('.', '_')}`;
-  return `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/f_auto,q_auto,w_150,h_150,c_fill/avatar/${fileName}`;
+export function createAvatarUrl(userId, email) {
+  const fileName = `avatar_${userId}`;
+  return `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/c_fill,w_150,h_150/${fileName}`;
 }
 
 /**
  * Kiểm tra xem avatar có tồn tại trên Cloudinary không
- * @param {string} userId - ID người dùng  
- * @param {string} email - Email người dùng
- * @returns {Promise<boolean>} True nếu avatar tồn tại
+ * @param {string} avatarUrl - URL của avatar
+ * @returns {Promise<boolean>}
  */
-export async function checkAvatarExists(userId, email) {
+export async function checkAvatarExists(avatarUrl) {
   try {
-    const avatarUrl = getAvatarUrl(userId, email);
     const response = await fetch(avatarUrl, { method: 'HEAD' });
     return response.ok;
   } catch (error) {
-    console.log('Avatar không tồn tại:', error.message);
     return false;
   }
 }
 
 /**
- * Xóa avatar cũ trên Cloudinary (nếu cần)
- * @param {string} userId - ID người dùng
- * @param {string} email - Email người dùng
+ * Xóa avatar khỏi Cloudinary
+ * @param {string} fileName - Tên file cần xóa
+ * @returns {Promise<boolean>}
  */
-export async function deleteAvatar(userId, email) {
+export async function deleteAvatar(fileName) {
   try {
-    const fileName = `${userId}_${email.replace('@', '_at_').replace('.', '_')}`;
-    
-    // Tạo signature để xóa (cần API secret)
-    // Chức năng này sẽ cần server-side implementation hoặc signed upload preset
-    console.log('Xóa avatar:', fileName);
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/destroy`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          public_id: fileName,
+          api_key: cloudinaryConfig.apiKey,
+        })
+      }
+    );
+
+    const result = await response.json();
+    return result.result === 'ok';
   } catch (error) {
     console.error('Lỗi khi xóa avatar:', error);
+    return false;
   }
 }

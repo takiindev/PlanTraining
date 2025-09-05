@@ -56,17 +56,14 @@ export function clearAuthStorage() {
  */
 export async function getUserByEmail(email) {
   try {
-    console.log("TokenService - Đang tìm user với email:", email);
     const startTime = Date.now();
     
     const q = query(collection(db, "accounts"), where("email", "==", email));
     const querySnapshot = await getDocs(q);
     
     const duration = Date.now() - startTime;
-    console.log(`TokenService - Query hoàn tất trong ${duration}ms`);
     
     if (querySnapshot.empty) {
-      console.log("TokenService - Không tìm thấy user với email:", email);
       return null;
     }
     
@@ -77,7 +74,6 @@ export async function getUserByEmail(email) {
       ...doc.data()
     };
     
-    console.log("TokenService - Tìm thấy user:", result.id);
     return result;
   } catch (error) {
     console.error("Lỗi khi lấy thông tin người dùng theo email:", error);

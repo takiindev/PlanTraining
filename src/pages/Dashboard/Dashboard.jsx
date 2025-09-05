@@ -149,16 +149,14 @@ function Dashboard() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     
-    // Subscribe to classes
+    // Real-time subscribe classes
     realtimeManager.subscribeClasses(year, month, (classesData) => {
-      console.log("Classes updated via realtime manager:", classesData.length);
       setClasses(classesData);
-    });
+    }, 'dashboard-classes');
 
     // Subscribe to current user info
     if (userInfo?.id) {
       realtimeManager.subscribeUserInfo(userInfo.id, (updatedUserInfo) => {
-        console.log("User info updated via realtime manager:", updatedUserInfo?.firstName);
         if (updatedUserInfo) {
           setUserInfo(updatedUserInfo);
         }
@@ -182,7 +180,6 @@ function Dashboard() {
     }
   };
 
-  // Debug function để setup admin và member
   const handleSetupRoles = async () => {
     try {
       const adminResult = await ensureAdminExists();

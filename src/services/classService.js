@@ -178,7 +178,6 @@ export async function getUserRelatedClasses(userId) {
     const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endDate = new Date(now.getFullYear(), now.getMonth() + 3, 0, 23, 59, 59);
     
-    console.log("Searching classes from", startDate, "to", endDate); // Debug log
     
     const q = query(
       collection(db, "classes"),
@@ -203,11 +202,9 @@ export async function getUserRelatedClasses(userId) {
           ...classData,
           userRole: isMainMentor ? 'mentor' : isSupportMentor ? 'support' : 'manager'
         });
-        console.log("Found user class:", classData.topic, "Role:", isMainMentor ? 'mentor' : isSupportMentor ? 'support' : 'manager'); // Debug log
       }
     });
     
-    console.log("Total user classes found:", userClasses.length); // Debug log
     return userClasses;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách lớp học của user:", error);
@@ -224,8 +221,21 @@ export async function getUserRelatedClasses(userId) {
  */
 export function subscribeToClassesByMonth(year, month, callback) {
   try {
+    // Validate input parameters
+    if (!year || !Number.isInteger(year) || year < 1900 || year > 3000) {
+      throw new Error(`Invalid year: ${year}`);
+    }
+    if (!Number.isInteger(month) || month < 0 || month > 11) {
+      throw new Error(`Invalid month: ${month}. Month should be 0-11`);
+    }
+    
     const startDate = new Date(year, month, 1);
     const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+    
+    // Validate created dates
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      throw new Error(`Invalid date range: ${startDate} - ${endDate}`);
+    }
     
     const q = query(
       collection(db, "classes"),
@@ -244,7 +254,6 @@ export function subscribeToClassesByMonth(year, month, callback) {
         });
       });
       
-      console.log("Real-time update - Classes loaded:", classes.length);
       callback(classes);
     }, (error) => {
       console.error("Lỗi real-time listener cho classes:", error);
@@ -296,7 +305,6 @@ export function subscribeToUserRelatedClasses(userId, callback) {
         }
       });
       
-      console.log("Real-time update - User classes:", userClasses.length);
       callback(userClasses);
     }, (error) => {
       console.error("Lỗi real-time listener cho user classes:", error);

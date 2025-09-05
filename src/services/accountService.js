@@ -146,7 +146,6 @@ export function subscribeToAccounts(callback) {
         });
       });
       
-      console.log("Real-time update - Accounts loaded:", accounts.length);
       callback(accounts);
     }, (error) => {
       console.error("Lỗi real-time listener cho accounts:", error);
@@ -196,7 +195,6 @@ export async function updateUserPassword(email, currentPassword, newPassword) {
       updatedAt: new Date()
     });
 
-    console.log("Mật khẩu đã được cập nhật thành công");
   } catch (error) {
     console.error("Lỗi khi cập nhật mật khẩu:", error);
     throw error;

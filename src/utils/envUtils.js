@@ -65,7 +65,8 @@ export const appConfig = {
 export const cloudinaryConfig = {
   cloudName: getEnvVar('VITE_CLOUDINARY_CLOUD_NAME'),
   apiKey: getEnvVar('VITE_CLOUDINARY_API_KEY'),
-  apiSecret: getEnvVar('VITE_CLOUDINARY_API_SECRET')
+  apiSecret: getEnvVar('VITE_CLOUDINARY_API_SECRET'),
+  uploadPreset: getEnvVar('VITE_CLOUDINARY_UPLOAD_PRESET', 'avatar_upload')
 };
 
 /**
