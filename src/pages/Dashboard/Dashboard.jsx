@@ -642,22 +642,6 @@ function Dashboard() {
               }}>
                 <div style={{ fontSize: "48px", marginBottom: "16px" }}>📅</div>
                 <div>Không có buổi dạy nào trong ngày này</div>
-                {canManageClasses() && (
-                  <button
-                    onClick={handleCreateClass}
-                    style={{
-                      marginTop: "16px",
-                      padding: "8px 16px",
-                      background: "#4299e1",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    + Tạo buổi dạy mới
-                  </button>
-                )}
               </div>
             ) : (
               getClassesForSelectedDate().map((cls, index) => (
@@ -737,6 +721,35 @@ function Dashboard() {
                   </div>
                 </div>
               ))
+            )}
+            
+            {/* Nút tạo buổi dạy mới luôn hiển thị phía dưới */}
+            {canManageClasses() && (
+              <div style={{
+                textAlign: "center",
+                padding: "20px",
+                borderTop: getClassesForSelectedDate().length > 0 ? "1px solid #e2e8f0" : "none",
+                marginTop: getClassesForSelectedDate().length > 0 ? "16px" : "0"
+              }}>
+                <button
+                  onClick={handleCreateClass}
+                  style={{
+                    padding: "12px 20px",
+                    background: "#4299e1",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    transition: "background 0.2s"
+                  }}
+                  onMouseOver={(e) => e.target.style.background = "#3182ce"}
+                  onMouseOut={(e) => e.target.style.background = "#4299e1"}
+                >
+                  + Tạo buổi dạy mới
+                </button>
+              </div>
             )}
           </div>
         </div>
